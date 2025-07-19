@@ -1,0 +1,19 @@
+[project]
+name = "test-uv"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+check = "ruff check && basedpyright"
+format = "ruff format"
+lint = "ruff check"
+typecheck = "basedpyright"
+
+[dependency-groups]
+dev = [
+  "basedpyright>=1.31.0",
+  "ruff>=0.12.4",
+]
