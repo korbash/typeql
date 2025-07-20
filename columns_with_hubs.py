@@ -2,13 +2,18 @@
 from __future__ import annotations
 
 # from dataclasses import dataclass
-from typing import final, Self
+from typing import final, Self, Literal
 
 from typing import Protocol
 
 
-class Column:
+class Hub:
     def join_to(self, other: Self):
+        return Join(self, other)
+
+
+class Hub_UserId:
+    def join_to(self, other: "Hub_UserId"):
         return Join(self, other)
 
 
@@ -19,14 +24,14 @@ class Join[T, U]:
         self.right = right
 
 
-class Hubs:
-    class User__Id:
-        def join_to[T: Users__Id | Purchase__UserId | Topups__UserId](self, other: T):
-            return Join(self, other)
+# class Hubs:
+#     class User__Id:
+#         def join_to[T: Users__Id | Purchase__UserId | Topups__UserId](self, other: T):
+#             return Join(self, other)
 
 
 @final
-class Users__Id(Hubs.User__Id):
+class Users__Id(Hub_UserId):
     """User identifier"""
 
     real_name = "id"
@@ -34,7 +39,7 @@ class Users__Id(Hubs.User__Id):
 
 
 @final
-class Users__RegDate(Column):
+class Users__RegDate(Hub):
     """Дата регистрации"""
 
     real_name = "reg_date"
@@ -48,7 +53,7 @@ class Users:
 
 
 @final
-class Purchase__UserId(Hubs.User__Id):
+class Purchase__UserId(Hub_UserId):
     """Ссылка на пользователя"""
 
     real_name = "user_id"
@@ -61,7 +66,7 @@ class Purchase:
 
 
 @final
-class Topups__UserId(Hubs.User__Id):
+class Topups__UserId(Hub_UserId):
     """Ссылка на пользователя (пополнение)"""
 
     real_name = "user_id"
@@ -80,7 +85,9 @@ def main():
     c3 = Topups.UserId
     c4 = Users.RegDate
     u = Users.Id
-    j = c4.join_to(c4)
+    j = c2.join_to(c3)
+
+    j = h1.join_to(h2)
 
     if c1 == c2:
         print("Equal")

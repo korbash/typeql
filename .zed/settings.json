@@ -13,13 +13,49 @@
         "python": {
           "pythonPath": ".venv/bin/python"
         },
-        "basedpyright.analysis": {
-          "diagnosticMode": "workspace",
-          "inlayHints": {
-            "callArgumentNames": false
+        "basedpyright": {
+          // === ОСНОВНЫЕ НАСТРОЙКИ ОТОБРАЖЕНИЯ ===
+          "disableLanguageServices": false,
+          "disableOrganizeImports": false,
+          "disableTaggedHints": false,
+
+          "analysis": {
+            // === ДИАГНОСТИКА И АНАЛИЗ ===
+            "diagnosticMode": "workspace", // "openFilesOnly" | "workspace"
+            "logLevel": "Information", // "Error" | "Warning" | "Information" | "Trace"
+            "verboseOutput": true,
+            "useLibraryCodeForTypes": true,
+            "autoSearchPaths": true,
+            "autoImportCompletions": true,
+
+            // === INLAY HINTS ===
+            "inlayHints": {
+              "variableTypes": true,
+              "functionReturnTypes": true,
+              "callArgumentNames": false,
+              "parameterNames": true,
+              "genericTypes": true
+            }
           }
         }
       }
     }
+  },
+
+  // === ГЛОБАЛЬНЫЕ НАСТРОЙКИ INLAY HINTS В ZED ===
+  "inlay_hints": {
+    "enabled": true,
+    "show_type_hints": true,
+    "show_parameter_hints": true,
+    "show_other_hints": true
   }
+
+  // === НАСТРОЙКИ ЯЗЫКА PYTHON ===
+  // "languages": {
+  //   "Python": {
+  //     "show_completions_on_input": true,
+  //     "enable_language_server": true,
+  //     "format_on_save": "on"
+  //   }
+  // }
 }
