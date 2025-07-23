@@ -24,12 +24,6 @@ class Join[T, U]:
         self.right = right
 
 
-# class Hubs:
-#     class User__Id:
-#         def join_to[T: Users__Id | Purchase__UserId | Topups__UserId](self, other: T):
-#             return Join(self, other)
-
-
 @final
 class Users__Id(Hub_UserId):
     """User identifier"""
@@ -87,7 +81,6 @@ def main():
     u = Users.Id
     j = c2.join_to(c3)
 
-    j = h1.join_to(h2)
 
     if c1 == c2:
         print("Equal")
