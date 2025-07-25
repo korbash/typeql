@@ -5,8 +5,9 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "pandas>=2.3.1",
-    "pandas-stubs>=2.3.0.250703",
+  "pandas-stubs>=2.3.0.250703",
+  "pandas>=2.3.1",
+  "sqlmodel>=0.0.24",
 ]
 
 [dependency-groups]
@@ -14,3 +15,16 @@ dev = [
   "basedpyright>=1.31.0",
   "ruff>=0.12.4",
 ]
+
+[tool.ruff]
+cache-dir = ".ruff_cache"
+respect-gitignore = true
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

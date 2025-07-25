@@ -1,6 +1,11 @@
 from typing import final, Protocol, Self, overload
 
 @final
+class Table:
+
+
+
+@final
 class Join[T, U]:
     def __init__(self, left: T, right: U):
         self.left = left
