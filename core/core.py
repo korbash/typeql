@@ -1,7 +1,6 @@
-from typing import final, Literal, NamedTuple, override, Callable, Self
+from typing import final, override, Self
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-
 
 @dataclass
 class Parametr:
@@ -20,27 +19,31 @@ class Exp:
 
 
 class Chain(ABC):
-    def __init__(
-        self, parent: "Chain | None" = None, relation: Parametr | Exp | None = None
-    ) -> None:
-        """element of Chain"""
-        if (relation is None and parent is not None) or (
-            relation is not None and parent is None
-        ):
-            raise ValueError("parent and relation must be both None or both not None")
-        if parent is None:
-            self.source: str = "placeholder"
-            my_id = self.id
-            self.source = str(my_id.relation)
-        else:
-            self.source = parent.source
 
-        self.relation: Parametr | Exp | None = relation
-        self.parent: Chain | None = parent
-        if str(self.relation or self.source).startswith("base_type."):
-            self.base_type = True
-        else:
-            self.base_type = False
+    def __init__(
+        self,
+        source: str,
+        parent: "Chain | None" = None,
+        relation: "Parametr | Exp | None" = None
+    ) -> None:
+        """Private constructor - use from_source() or from_parent() instead"""
+        self.source: str = source
+        self.parent: "Chain | None" = parent
+        self.relation: "Parametr | Exp | None" = relation
+
+        # Определяем базовый тип
+        relation_str = str(self.relation or self.source)
+        self.base_type: bool = relation_str.startswith("base_type.") or self.source.startswith("base_type.")
+
+    @classmethod
+    def from_source(cls, source: str) -> Self:
+        """Create root chain element"""
+        return cls(source=source)
+
+    @classmethod
+    def from_parent(cls, parent: "Chain", relation: Parametr | Exp) -> Self:
+        """Create child chain element"""
+        return cls(source=parent.source, parent=parent, relation=relation)
 
     @property
     @abstractmethod
@@ -71,7 +74,7 @@ class DateTime(Chain):
     @property
     @override
     def id(self):
-        return Null(self, Parametr("base_type.date_time"))
+        return Null.from_parent(self, Parametr("base_type.date_time"))
 
 
 @final
@@ -81,7 +84,7 @@ class Number(Chain):
     @property
     @override
     def id(self):
-        return Null(self, Parametr("base_type.number"))
+        return Null.from_parent(self, Parametr("base_type.number"))
 
 
 @final
@@ -91,7 +94,7 @@ class String(Chain):
     @property
     @override
     def id(self):
-        return Null(self, Parametr("base_type.string"))
+        return Null.from_parent(self, Parametr("base_type.string"))
 
 @final
 class Null(Chain):
@@ -100,4 +103,4 @@ class Null(Chain):
     @property
     @override
     def id(self):
-        return Null(self, Parametr("base_type.null"))
+        return Null.from_parent(self, Parametr("base_type.null"))
