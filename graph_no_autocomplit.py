@@ -159,6 +159,8 @@ c2 = deal.deals__goodId.goods__goodId.goods__productId.goods__goodId.goods__prod
 
 (c.regInfo__userId__UP.deals__seller__UP.deals__id__UP.deals__goodId)
 
+d2 = deal.deals__seller.regInfo__userId.regInfo__regDate
+
 
 # Test examples to show beautiful repr in action
 print("\n=== Beautiful repr examples ===")
@@ -175,7 +177,7 @@ print("repr(very long chain):", repr(c2))
 print("str(very long chain): ", str(c2))
 print(
     "\nrepr(complex path):   ",
-    repr(c.regInfo__userId__UP.deals__seller__UP.deals__id__UP),
+    repr(c.regInfo__userId__UP.deals__seller__UP.deals__id__UP.),
 )
 print(
     "str(complex path):    ", str(c.regInfo__userId__UP.deals__seller__UP.deals__id__UP)
