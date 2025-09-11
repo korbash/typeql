@@ -44,7 +44,7 @@ class Chain[SourceT: str](ABC):
 
     @property
     @abstractmethod
-    def id(self) -> "Chain[SourceT]":
+    def id(self) -> "Chain[SourceT] | None":
         """Beautiful representation of Chain with full path"""
 
     @override
@@ -81,7 +81,17 @@ class Number[T: str](Chain[T]):
     @property
     @override
     def id(self):
-        return Null[T].from_parent(self, Parametr("base_type.number"))
+        return Bool[T].from_parent(self, Parametr("base_type.number"))
+
+
+@final
+class Bool[T: str](Chain[T]):
+    """Any Number"""
+
+    @property
+    @override
+    def id(self):
+        return Null[T].from_parent(self, Parametr("base_type.bool"))
 
 
 @final
@@ -101,4 +111,5 @@ class Null[T: str](Chain[T]):
     @property
     @override
     def id(self):
-        return Null[T].from_parent(self, Parametr("base_type.null"))
+        return None
+        # return Null[T].from_parent(self, Parametr("base_type.null"))

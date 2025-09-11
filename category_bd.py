@@ -103,3 +103,5 @@ print("Deal ID:", bd.deals)
 print("Buyer registration date:", buyer_reg_date)
 print("Seller registration date:", seller_reg_date)
 print("Product chain:", product_chain)
+for i in range(10):
+    a = i * 0.2
