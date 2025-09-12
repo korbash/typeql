@@ -63,6 +63,10 @@ class Chain[SourceT: str](ABC):
         path_parts.reverse()
         return " -> ".join(path_parts)
 
+    def __getattr__(self, name: str):
+        """If attribute not found, create a Null object"""
+        return Null[SourceT].from_parent(self, Parametr(f"not_definet.{name}"))
+
 
 @final
 class DateTime[T: str](Chain[T]):
