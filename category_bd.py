@@ -1,38 +1,40 @@
-from typing import final, override, Literal
+from typing import final, override
 
-from core.core import Chain, DateTime, Parametr, String
+from core.core import DateTime, String
+from core.expressions import Expression as Exp, Relation as R, Source
+from sources import Sources as S
 
 
 @final
-class RegInfo[T: str](Chain[T]):
+class Users[T: Source](String[T]):
     """user uniq id"""
 
     @property
     @override
     def id(self):
-        return String[T].from_parent(self, Parametr("reg_info.user_id"))
+        return String(R(self.exp, "toString"))
 
     @property
     def regDate(self):
-        return DateTime[T].from_parent(self, Parametr("reg_info.reg_date"))
+        return DateTime(R(self.exp, "toDateTime"))
 
 
 @final
-class Goods[T: str](Chain[T]):
+class Goods[T: Source](String[T]):
     """good uniq id"""
 
     @property
     @override
     def id(self):
-        return String[T].from_parent(self, Parametr("goods.good_id"))
+        return String(R(self.exp, "toString"))
 
     @property
     def productId(self):
-        return ProductId[T].from_parent(self, Parametr("goods.product_id"))
+        return ProductId(R(self.exp, "productId"))
 
 
 @final
-class ProductId[T: str](Chain[T]):
+class ProductId[T: Source](String[T]):
     """another good uniq id"""
 
     base_type: bool = False
@@ -40,63 +42,67 @@ class ProductId[T: str](Chain[T]):
     @property
     @override
     def id(self):
-        return String[T].from_parent(self, Parametr("goods.product_id"))
+        return String(R(self.exp, "toString"))
 
     @property
     def goodId(self):
-        return Goods[T].from_parent(self, Parametr("goods.goods_id"))
+        exp = R(self.exp, "goodId")
+        return Goods(exp)
 
 
 @final
-class Deals[T: str](Chain[T]):
+class Deals[T: Source](String[T]):
     """deal uniq id"""
 
     @property
     @override
     def id(self):
-        return String[T].from_parent(self, Parametr("deals.deal_id"))
+        return String(R(self.exp, "toString"))
 
     @property
     def buyerId(self):
-        return RegInfo[T].from_parent(self, Parametr("deals.buyer_id"))
+        return Users(R(self.exp, "buyerId"))
 
     @property
     def sellerId(self):
-        return RegInfo[T].from_parent(self, Parametr("deals.seller_id"))
+        return Users(R(self.exp, "sellerId"))
 
     @property
     def goodId(self):
-        return Goods[T].from_parent(self, Parametr("deals.good_id"))
+        return Goods(R(self.exp, "goodId"))
 
     @property
     def dealDate(self):
-        return DateTime[T].from_parent(self, Parametr("deals.deal_date"))
+        return DateTime(R(self.exp, "dealDate"))
 
 
 class BD:
     @property
     def deals(self):
-        return Deals[Literal["deals"]]("deals")
+        return Deals(Exp(S.Deals()))
 
     @property
-    def reg_info(self):
-        return RegInfo[Literal["reg_info"]]("reg_info")
+    def users(self):
+        return Users(Exp(S.Users()))
 
     @property
     def goods(self):
-        return Goods[Literal["goods"]]("goods")
+        return Goods(Exp(S.Goods()))
 
     @property
-    def productId(self):
-        return Goods[Literal["goods.product_id"]]("goods.product_id")
+    def products(self):
+        return Goods(Exp(S.Products()))
 
 
 bd = BD()
 buyer_reg_date = bd.deals.buyerId.regDate
 seller_reg_date = bd.deals.sellerId.regDate
 product_chain = bd.deals.goodId.productId.goodId.productId
-user_reg_date = bd.reg_info.regDate
-
+user_reg_date = bd.users.regDate
+print(type(buyer_reg_date.exp.source) is type(product_chain.exp.source))
+print(buyer_reg_date.exp.source == product_chain.exp.source)
+print(type(buyer_reg_date.exp.source))
+print(type(product_chain.exp.source))
 # Test examples to show the new Chain pattern
 print("\n=== Chain pattern examples ===")
 print("Deal ID:", bd.deals)

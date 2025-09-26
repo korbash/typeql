@@ -2,11 +2,10 @@ from dataclasses import dataclass
 from typing import override
 
 
-@dataclass(frozen=True)
+@dataclass(init=False)
 class Source:
-    """Represents a data source, like a table."""
-
-    name: str
+    def __init__(self):
+        self.name: str = self.__class__.__name__
 
     @override
     def __repr__(self) -> str:
@@ -14,20 +13,20 @@ class Source:
 
 
 @dataclass(frozen=True)
-class Expression:
+class Expression[T: Source]:
     """Base class for expressions."""
 
-    source: Source
+    source: T
 
 
 @dataclass(frozen=True, init=False)
-class Relation(Expression):
+class Relation[T: Source](Expression[T]):
     """Represents getting an attribute from another expression."""
 
-    exp: Expression
+    exp: Expression[T]
     relation_name: str
 
-    def __init__(self, exp: Expression, relation_name: str):
+    def __init__(self, exp: Expression[T], relation_name: str):
         super().__init__(source=exp.source)
         object.__setattr__(self, "exp", exp)
         object.__setattr__(self, "relation_name", relation_name)
@@ -38,13 +37,13 @@ class Relation(Expression):
 
 
 @dataclass(frozen=True, init=False)
-class Sum(Expression):
+class Sum[T: Source](Expression[T]):
     """Represents a sum function call."""
 
-    left: Expression
-    right: Expression
+    left: Expression[T]
+    right: Expression[T]
 
-    def __init__(self, left: Expression, right: Expression):
+    def __init__(self, left: Expression[T], right: Expression[T]):
         if left.source is right.source:
             super().__init__(source=left.source)
             object.__setattr__(self, "left", left)
@@ -58,12 +57,12 @@ class Sum(Expression):
 
 
 @dataclass(frozen=True, init=False)
-class Coalesce(Expression):
+class Coalesce[T: Source](Expression[T]):
     """Represents a coalesce function call."""
 
-    values: tuple[Expression, ...]
+    values: tuple[Expression[T], ...]
 
-    def __init__(self, *values: Expression):
+    def __init__(self, *values: Expression[T]):
         if len(values) < 2:
             raise ValueError("COALESCE requires at least 2 values")
 

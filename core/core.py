@@ -1,119 +1,58 @@
-from typing import final, override, Self
-from dataclasses import dataclass
-from abc import ABC, abstractmethod
+from typing import override
+from .expressions import Expression as Exp, Relation as R, Source
 
 
-@dataclass
-class Parametr:
-    column: str
-
-    @override
-    def __repr__(self) -> str:
-        return self.column
-
-
-@dataclass
-class Exp:
-    fun: str
-    arg0: Self | Parametr
-    arg1: Self | Parametr
-
-
-class Chain[SourceT: str](ABC):
-    def __init__(
-        self,
-        source: SourceT,
-        parent: "Chain[SourceT] | None" = None,
-        relation: Parametr | Exp | None = None,
-    ) -> None:
+class Null[T: Source]:
+    def __init__(self, exp: Exp[T]) -> None:
         """Private constructor - use from_source() or from_parent() instead"""
-        self.source: SourceT = source
-        self.parent: Chain[SourceT] | None = parent
-        self.relation: Parametr | Exp | None = relation
-
-        # Определяем базовый тип
-        relation_str = str(self.relation or self.source)
-        self.base_type: bool = relation_str.startswith(
-            "base_type."
-        ) or self.source.startswith("base_type.")
-
-    @classmethod
-    def from_parent(cls, parent: "Chain[SourceT]", relation: Parametr | Exp):
-        """Create child chain element"""
-        return cls(source=parent.source, parent=parent, relation=relation)
+        self.exp: Exp[T] = exp
 
     @property
-    @abstractmethod
-    def id(self) -> "Chain[SourceT] | None":
-        """Beautiful representation of Chain with full path"""
+    # @abstractmethod
+    def id(self) -> "Null[T] | None":
+        return None
 
     @override
     def __repr__(self) -> str:
-        """Beautiful representation of Chain with column names and arrows"""
-
-        path_parts: list[str] = []
-        current = self
-
-        while current.parent is not None:
-            path_parts.append(str(current.relation))
-            current = current.parent
-
-        # Reverse to get correct order and join with arrows
-        path_parts.append(self.source)
-        path_parts.reverse()
-        return " -> ".join(path_parts)
+        """Beautiful representation of Null with column names and arrows"""
+        return self.exp.__repr__()
 
     def __getattr__(self, name: str):
         """If attribute not found, create a Null object"""
-        return Null[SourceT].from_parent(self, Parametr(f"not_definet.{name}"))
+        return Null(self.exp)
 
 
-@final
-class DateTime[T: str](Chain[T]):
+class DateTime[T: Source](Null[T]):
     """Any Date"""
 
     @property
     @override
     def id(self):
-        return Null[T].from_parent(self, Parametr("base_type.date_time"))
+        return Null(R(self.exp, "null"))
 
 
-@final
-class Number[T: str](Chain[T]):
+class Number[T: Source](Null[T]):
     """Any Number"""
 
     @property
     @override
     def id(self):
-        return Bool[T].from_parent(self, Parametr("base_type.number"))
+        return Null(R(self.exp, "null"))
 
 
-@final
-class Bool[T: str](Chain[T]):
+class Bool[T: Source](Null[T]):
     """Any Number"""
 
     @property
     @override
     def id(self):
-        return Null[T].from_parent(self, Parametr("base_type.bool"))
+        return Null(R(self.exp, "null"))
 
 
-@final
-class String[T: str](Chain[T]):
+class String[T: Source](Null[T]):
     """Any String"""
 
     @property
     @override
     def id(self):
-        return Null[T].from_parent(self, Parametr("base_type.string"))
-
-
-@final
-class Null[T: str](Chain[T]):
-    """Base type for all SQL types"""
-
-    @property
-    @override
-    def id(self):
-        return None
-        # return Null[T].from_parent(self, Parametr("base_type.null"))
+        return Null(R(self.exp, "null"))
