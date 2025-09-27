@@ -1,13 +1,14 @@
 from typing import final, override
 
-from core.core import DateTime, String
+from core.core import DateTime, String, Null, Number
 from core.expressions import Expression as Exp, Relation as R, Source
-from sources import Sources as S
 
 
 @final
 class Users[T: Source](String[T]):
     """user uniq id"""
+
+    class UsersSrc(Source): ...
 
     @property
     @override
@@ -18,10 +19,16 @@ class Users[T: Source](String[T]):
     def regDate(self):
         return DateTime(R(self.exp, "toDateTime"))
 
+    @property
+    def age(self):
+        return Number(R(self.exp, "age"))
+
 
 @final
 class Goods[T: Source](String[T]):
     """good uniq id"""
+
+    class GoodsSrc(Source): ...
 
     @property
     @override
@@ -30,14 +37,14 @@ class Goods[T: Source](String[T]):
 
     @property
     def productId(self):
-        return ProductId(R(self.exp, "productId"))
+        return Products(R(self.exp, "productId"))
 
 
 @final
-class ProductId[T: Source](String[T]):
+class Products[T: Source](String[T]):
     """another good uniq id"""
 
-    base_type: bool = False
+    class ProductsSrc(Source): ...
 
     @property
     @override
@@ -47,12 +54,14 @@ class ProductId[T: Source](String[T]):
     @property
     def goodId(self):
         exp = R(self.exp, "goodId")
-        return Goods(exp)
+        return Goods(exp) | Users(exp)
 
 
 @final
 class Deals[T: Source](String[T]):
     """deal uniq id"""
+
+    class DealsSrc(Source): ...
 
     @property
     @override
@@ -79,19 +88,19 @@ class Deals[T: Source](String[T]):
 class BD:
     @property
     def deals(self):
-        return Deals(Exp(S.Deals()))
+        return Deals(Exp(Deals.DealsSrc()))
 
     @property
     def users(self):
-        return Users(Exp(S.Users()))
+        return Users(Exp(Users.UsersSrc()))
 
     @property
     def goods(self):
-        return Goods(Exp(S.Goods()))
+        return Goods(Exp(Goods.GoodsSrc()))
 
     @property
     def products(self):
-        return Goods(Exp(S.Products()))
+        return Goods(Exp(Products.ProductsSrc()))
 
 
 bd = BD()
@@ -111,3 +120,9 @@ print("Seller registration date:", seller_reg_date)
 print("Product chain:", product_chain)
 for i in range(10):
     a = i * 0.2
+
+a = bd.goods.productId.goodId.productId
+a = product_chain.id
+b = bd.deals
+d = b.id + bd.deals.sellerId
+a = 11 + bd.users.age
