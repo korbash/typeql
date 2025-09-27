@@ -124,5 +124,11 @@ for i in range(10):
 a = bd.goods.productId.goodId.productId
 a = product_chain.id
 b = bd.deals
+print(b.id.exp.source)
+print(bd.deals.sellerId.exp.source)
+print(type(bd.deals.sellerId.exp.source) is type(b.id.exp.source))
 d = b.id + bd.deals.sellerId
-a = 11 + bd.users.age
+a = 11 + bd.users.age / 0 * 4
+b = bd.deals.buyerId.id + "qqq"
+print(b)
+print(a)

@@ -1,14 +1,15 @@
-from typing import override, Self
+from typing import override
 from .expressions import (
     Expression as Exp,
     Relation as R,
     Source,
     Sum,
+    Subtract,
+    Multiply,
+    Divide,
+    Concat,
     ConstantString,
     ConstantNumber,
-    ConstantBoolean,
-    ConstantRelation,
-    ConstantNull,
 )
 from random import choice
 from abc import ABC, abstractmethod
@@ -86,9 +87,53 @@ class Number[T: Source](Chain[T]):
                 n = ConstantNumber(self.exp.source, other)
                 return Number(Sum(n, self.exp))
 
-    # def __radd__(self, other: Self, /):
-    #     self.exp = Sum(self.exp, other.exp)
-    #     return self
+    def __sub__(self, other: "Number[T] | int | float", /):
+        match other:
+            case Number():
+                return Number(Subtract(self.exp, other.exp))
+            case int() | float():
+                n = ConstantNumber(self.exp.source, other)
+                return Number(Subtract(self.exp, n))
+
+    def __rsub__(self, other: "Number[T] | int | float", /):
+        match other:
+            case Number():
+                return Number(Subtract(other.exp, self.exp))
+            case int() | float():
+                n = ConstantNumber(self.exp.source, other)
+                return Number(Subtract(n, self.exp))
+
+    def __mul__(self, other: "Number[T] | int | float", /):
+        match other:
+            case Number():
+                return Number(Multiply(self.exp, other.exp))
+            case int() | float():
+                n = ConstantNumber(self.exp.source, other)
+                return Number(Multiply(self.exp, n))
+
+    def __rmul__(self, other: "Number[T] | int | float", /):
+        match other:
+            case Number():
+                return Number(Multiply(other.exp, self.exp))
+            case int() | float():
+                n = ConstantNumber(self.exp.source, other)
+                return Number(Multiply(n, self.exp))
+
+    def __truediv__(self, other: "Number[T] | int | float", /):
+        match other:
+            case Number():
+                return Number(Divide(self.exp, other.exp))
+            case int() | float():
+                n = ConstantNumber(self.exp.source, other)
+                return Number(Divide(self.exp, n))
+
+    def __rtruediv__(self, other: "Number[T] | int | float", /):
+        match other:
+            case Number():
+                return Number(Divide(other.exp, self.exp))
+            case int() | float():
+                n = ConstantNumber(self.exp.source, other)
+                return Number(Divide(n, self.exp))
 
 
 class Bool[T: Source](Chain[T]):
@@ -112,10 +157,21 @@ class String[T: Source](Chain[T]):
     def id(self):
         return String(R(self.exp, "null"))
 
-    def __add__(self, other: "String[T]", /):
-        # if isinstance(other, str):
-        #     other = String(other)
-        return String(Sum(self.exp, other.exp))
+    def __add__(self, other: "String[T] | str", /):
+        match other:
+            case String():
+                return String(Concat(self.exp, other.exp))
+            case str():
+                s = ConstantString(self.exp.source, other)
+                return String(Concat(self.exp, s))
+
+    def __radd__(self, other: "String[T] | str", /):
+        match other:
+            case String():
+                return String(Concat(other.exp, self.exp))
+            case str():
+                s = ConstantString(self.exp.source, other)
+                return String(Concat(s, self.exp))
 
 
 class Null[T: Source](Chain[T]):

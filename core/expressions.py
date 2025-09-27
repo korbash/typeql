@@ -19,6 +19,10 @@ class Expression[T: Source]:
 
     source: T
 
+    @override
+    def __repr__(self) -> str:
+        return str(self.source)
+
 
 @dataclass(frozen=True)
 class ConstantNumber[T: Source](Expression[T]):
@@ -94,7 +98,7 @@ class Sum[T: Source](Expression[T]):
     right: Expression[T]
 
     def __init__(self, left: Expression[T], right: Expression[T]):
-        if left.source is right.source:
+        if left.source == right.source:
             super().__init__(source=left.source)
             object.__setattr__(self, "left", left)
             object.__setattr__(self, "right", right)
@@ -107,6 +111,86 @@ class Sum[T: Source](Expression[T]):
 
 
 @dataclass(frozen=True, init=False)
+class Subtract[T: Source](Expression[T]):
+    """Represents a subtract function call."""
+
+    left: Expression[T]
+    right: Expression[T]
+
+    def __init__(self, left: Expression[T], right: Expression[T]):
+        if left.source == right.source:
+            super().__init__(source=left.source)
+            object.__setattr__(self, "left", left)
+            object.__setattr__(self, "right", right)
+        else:
+            raise ValueError("Expressions must have the same source")
+
+    @override
+    def __repr__(self) -> str:
+        return f"subtract({self.left}, {self.right})"
+
+
+@dataclass(frozen=True, init=False)
+class Multiply[T: Source](Expression[T]):
+    """Represents a multiply function call."""
+
+    left: Expression[T]
+    right: Expression[T]
+
+    def __init__(self, left: Expression[T], right: Expression[T]):
+        if left.source == right.source:
+            super().__init__(source=left.source)
+            object.__setattr__(self, "left", left)
+            object.__setattr__(self, "right", right)
+        else:
+            raise ValueError("Expressions must have the same source")
+
+    @override
+    def __repr__(self) -> str:
+        return f"multiply({self.left}, {self.right})"
+
+
+@dataclass(frozen=True, init=False)
+class Divide[T: Source](Expression[T]):
+    """Represents a divide function call."""
+
+    left: Expression[T]
+    right: Expression[T]
+
+    def __init__(self, left: Expression[T], right: Expression[T]):
+        if left.source == right.source:
+            super().__init__(source=left.source)
+            object.__setattr__(self, "left", left)
+            object.__setattr__(self, "right", right)
+        else:
+            raise ValueError("Expressions must have the same source")
+
+    @override
+    def __repr__(self) -> str:
+        return f"divide({self.left}, {self.right})"
+
+
+@dataclass(frozen=True, init=False)
+class Concat[T: Source](Expression[T]):
+    """Represents a string concatenation function call."""
+
+    left: Expression[T]
+    right: Expression[T]
+
+    def __init__(self, left: Expression[T], right: Expression[T]):
+        if left.source == right.source:
+            super().__init__(source=left.source)
+            object.__setattr__(self, "left", left)
+            object.__setattr__(self, "right", right)
+        else:
+            raise ValueError("Expressions must have the same source")
+
+    @override
+    def __repr__(self) -> str:
+        return f"concat({self.left}, {self.right})"
+
+
+@dataclass(frozen=True, init=False)
 class Coalesce[T: Source](Expression[T]):
     """Represents a coalesce function call."""
 
@@ -115,7 +199,7 @@ class Coalesce[T: Source](Expression[T]):
     def __init__(self, *values: Expression[T]):
         # Проверяем что все выражения из одного источника
         first_source = values[0].source
-        if not all(v.source is first_source for v in values):
+        if not all(v.source == first_source for v in values):
             raise ValueError("All expressions must have the same source")
 
         super().__init__(source=first_source)
