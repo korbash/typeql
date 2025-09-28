@@ -191,6 +191,126 @@ class Concat[T: Source](Expression[T]):
 
 
 @dataclass(frozen=True, init=False)
+class Equal[T: Source](Expression[T]):
+    """Represents an equality comparison."""
+
+    left: Expression[T]
+    right: Expression[T]
+
+    def __init__(self, left: Expression[T], right: Expression[T]):
+        if left.source == right.source:
+            super().__init__(source=left.source)
+            object.__setattr__(self, "left", left)
+            object.__setattr__(self, "right", right)
+        else:
+            raise ValueError("Expressions must have the same source")
+
+    @override
+    def __repr__(self) -> str:
+        return f"equal({self.left}, {self.right})"
+
+
+@dataclass(frozen=True, init=False)
+class NotEqual[T: Source](Expression[T]):
+    """Represents a not-equal comparison."""
+
+    left: Expression[T]
+    right: Expression[T]
+
+    def __init__(self, left: Expression[T], right: Expression[T]):
+        if left.source == right.source:
+            super().__init__(source=left.source)
+            object.__setattr__(self, "left", left)
+            object.__setattr__(self, "right", right)
+        else:
+            raise ValueError("Expressions must have the same source")
+
+    @override
+    def __repr__(self) -> str:
+        return f"not_equal({self.left}, {self.right})"
+
+
+@dataclass(frozen=True, init=False)
+class LessThan[T: Source](Expression[T]):
+    """Represents a less-than comparison."""
+
+    left: Expression[T]
+    right: Expression[T]
+
+    def __init__(self, left: Expression[T], right: Expression[T]):
+        if left.source == right.source:
+            super().__init__(source=left.source)
+            object.__setattr__(self, "left", left)
+            object.__setattr__(self, "right", right)
+        else:
+            raise ValueError("Expressions must have the same source")
+
+    @override
+    def __repr__(self) -> str:
+        return f"less_than({self.left}, {self.right})"
+
+
+@dataclass(frozen=True, init=False)
+class LessEqual[T: Source](Expression[T]):
+    """Represents a less-than-or-equal comparison."""
+
+    left: Expression[T]
+    right: Expression[T]
+
+    def __init__(self, left: Expression[T], right: Expression[T]):
+        if left.source == right.source:
+            super().__init__(source=left.source)
+            object.__setattr__(self, "left", left)
+            object.__setattr__(self, "right", right)
+        else:
+            raise ValueError("Expressions must have the same source")
+
+    @override
+    def __repr__(self) -> str:
+        return f"less_equal({self.left}, {self.right})"
+
+
+@dataclass(frozen=True, init=False)
+class GreaterThan[T: Source](Expression[T]):
+    """Represents a greater-than comparison."""
+
+    left: Expression[T]
+    right: Expression[T]
+
+    def __init__(self, left: Expression[T], right: Expression[T]):
+        if left.source == right.source:
+            super().__init__(source=left.source)
+            object.__setattr__(self, "left", left)
+            object.__setattr__(self, "right", right)
+        else:
+            raise ValueError("Expressions must have the same source")
+
+    @override
+    def __repr__(self) -> str:
+        return f"greater_than({self.left}, {self.right})"
+
+
+@dataclass(frozen=True, init=False)
+class GreaterEqual[T: Source](Expression[T]):
+    """Represents a greater-than-or-equal comparison."""
+
+    left: Expression[T]
+    right: Expression[T]
+
+    def __init__(self, left: Expression[T], right: Expression[T]):
+        if left.source == right.source:
+            super().__init__(source=left.source)
+            object.__setattr__(self, "left", left)
+            object.__setattr__(self, "right", right)
+        else:
+            raise ValueError("Expressions must have the same source")
+
+    @override
+    def __repr__(self) -> str:
+        return f"greater_equal({self.left}, {self.right})"
+
+
+@dataclass(frozen=True, init=False)
 class Coalesce[T: Source](Expression[T]):
     """Represents a coalesce function call."""
 

@@ -128,7 +128,7 @@ print(b.id.exp.source)
 print(bd.deals.sellerId.exp.source)
 print(type(bd.deals.sellerId.exp.source) is type(b.id.exp.source))
 d = b.id + bd.deals.sellerId
-a = 11 + bd.users.age / 0 * 4
+a = 11 + bd.users.age / 0 * 4 > 6
 b = bd.deals.buyerId.id + "qqq"
 print(b)
 print(a)

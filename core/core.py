@@ -8,6 +8,12 @@ from .expressions import (
     Multiply,
     Divide,
     Concat,
+    Equal,
+    NotEqual,
+    LessThan,
+    LessEqual,
+    GreaterThan,
+    GreaterEqual,
     ConstantString,
     ConstantNumber,
 )
@@ -71,69 +77,61 @@ class Number[T: Source](Chain[T]):
     def id(self):
         return Number(R(self.exp, "null"))
 
-    def __add__(self, other: "Number[T] | int | float", /):
+    def _to_exp(self, other: "Number[T] | int | float", /):
+        """Convert number or constant to expression"""
         match other:
             case Number():
-                return Number(Sum(self.exp, other.exp))
+                return other.exp
             case int() | float():
-                n = ConstantNumber(self.exp.source, other)
-                return Number(Sum(self.exp, n))
+                return ConstantNumber(self.exp.source, other)
+
+    def __add__(self, other: "Number[T] | int | float", /):
+        return Number(Sum(self.exp, self._to_exp(other)))
 
     def __radd__(self, other: "Number[T] | int | float", /):
-        match other:
-            case Number():
-                return Number(Sum(other.exp, self.exp))
-            case int() | float():
-                n = ConstantNumber(self.exp.source, other)
-                return Number(Sum(n, self.exp))
+        return Number(Sum(self._to_exp(other), self.exp))
 
     def __sub__(self, other: "Number[T] | int | float", /):
-        match other:
-            case Number():
-                return Number(Subtract(self.exp, other.exp))
-            case int() | float():
-                n = ConstantNumber(self.exp.source, other)
-                return Number(Subtract(self.exp, n))
+        return Number(Subtract(self.exp, self._to_exp(other)))
 
     def __rsub__(self, other: "Number[T] | int | float", /):
-        match other:
-            case Number():
-                return Number(Subtract(other.exp, self.exp))
-            case int() | float():
-                n = ConstantNumber(self.exp.source, other)
-                return Number(Subtract(n, self.exp))
+        return Number(Subtract(self._to_exp(other), self.exp))
 
     def __mul__(self, other: "Number[T] | int | float", /):
-        match other:
-            case Number():
-                return Number(Multiply(self.exp, other.exp))
-            case int() | float():
-                n = ConstantNumber(self.exp.source, other)
-                return Number(Multiply(self.exp, n))
+        return Number(Multiply(self.exp, self._to_exp(other)))
 
     def __rmul__(self, other: "Number[T] | int | float", /):
-        match other:
-            case Number():
-                return Number(Multiply(other.exp, self.exp))
-            case int() | float():
-                n = ConstantNumber(self.exp.source, other)
-                return Number(Multiply(n, self.exp))
+        return Number(Multiply(self._to_exp(other), self.exp))
 
     def __truediv__(self, other: "Number[T] | int | float", /):
-        match other:
-            case Number():
-                return Number(Divide(self.exp, other.exp))
-            case int() | float():
-                n = ConstantNumber(self.exp.source, other)
-                return Number(Divide(self.exp, n))
+        return Number(Divide(self.exp, self._to_exp(other)))
 
     def __rtruediv__(self, other: "Number[T] | int | float", /):
-        match other:
-            case Number():
-                return Number(Divide(other.exp, self.exp))
-            case int() | float():
-                n = ConstantNumber(self.exp.source, other)
-                return Number(Divide(n, self.exp))
+        return Number(Divide(self._to_exp(other), self.exp))
+
+    def __eq__(self, other: "Number[T] | int | float", /):
+        """Equality comparison operator"""
+        return Bool(Equal(self.exp, self._to_exp(other)))
+
+    def __ne__(self, other: "Number[T] | int | float", /):
+        """Not equal comparison operator"""
+        return Bool(NotEqual(self.exp, self._to_exp(other)))
+
+    def __lt__(self, other: "Number[T] | int | float", /):
+        """Less than comparison operator"""
+        return Bool(LessThan(self.exp, self._to_exp(other)))
+
+    def __le__(self, other: "Number[T] | int | float", /):
+        """Less than or equal comparison operator"""
+        return Bool(LessEqual(self.exp, self._to_exp(other)))
+
+    def __gt__(self, other: "Number[T] | int | float", /):
+        """Greater than comparison operator"""
+        return Bool(GreaterThan(self.exp, self._to_exp(other)))
+
+    def __ge__(self, other: "Number[T] | int | float", /):
+        """Greater than or equal comparison operator"""
+        return Bool(GreaterEqual(self.exp, self._to_exp(other)))
 
 
 class Bool[T: Source](Chain[T]):
@@ -157,21 +155,19 @@ class String[T: Source](Chain[T]):
     def id(self):
         return String(R(self.exp, "null"))
 
-    def __add__(self, other: "String[T] | str", /):
+    def _to_exp(self, other: "String[T] | str", /):
+        """Convert string or constant to expression"""
         match other:
             case String():
-                return String(Concat(self.exp, other.exp))
+                return other.exp
             case str():
-                s = ConstantString(self.exp.source, other)
-                return String(Concat(self.exp, s))
+                return ConstantString(self.exp.source, other)
+
+    def __add__(self, other: "String[T] | str", /):
+        return String(Concat(self.exp, self._to_exp(other)))
 
     def __radd__(self, other: "String[T] | str", /):
-        match other:
-            case String():
-                return String(Concat(other.exp, self.exp))
-            case str():
-                s = ConstantString(self.exp.source, other)
-                return String(Concat(s, self.exp))
+        return String(Concat(self._to_exp(other), self.exp))
 
 
 class Null[T: Source](Chain[T]):
