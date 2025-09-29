@@ -311,6 +311,82 @@ class GreaterEqual[T: Source](Expression[T]):
 
 
 @dataclass(frozen=True, init=False)
+class And[T: Source](Expression[T]):
+    """Represents a logical AND operation."""
+
+    left: Expression[T]
+    right: Expression[T]
+
+    def __init__(self, left: Expression[T], right: Expression[T]):
+        if left.source == right.source:
+            super().__init__(source=left.source)
+            object.__setattr__(self, "left", left)
+            object.__setattr__(self, "right", right)
+        else:
+            raise ValueError("Expressions must have the same source")
+
+    @override
+    def __repr__(self) -> str:
+        return f"and({self.left}, {self.right})"
+
+
+@dataclass(frozen=True, init=False)
+class Or[T: Source](Expression[T]):
+    """Represents a logical OR operation."""
+
+    left: Expression[T]
+    right: Expression[T]
+
+    def __init__(self, left: Expression[T], right: Expression[T]):
+        if left.source == right.source:
+            super().__init__(source=left.source)
+            object.__setattr__(self, "left", left)
+            object.__setattr__(self, "right", right)
+        else:
+            raise ValueError("Expressions must have the same source")
+
+    @override
+    def __repr__(self) -> str:
+        return f"or({self.left}, {self.right})"
+
+
+@dataclass(frozen=True, init=False)
+class Not[T: Source](Expression[T]):
+    """Represents a logical NOT operation."""
+
+    operand: Expression[T]
+
+    def __init__(self, operand: Expression[T]):
+        super().__init__(source=operand.source)
+        object.__setattr__(self, "operand", operand)
+
+    @override
+    def __repr__(self) -> str:
+        return f"not({self.operand})"
+
+
+@dataclass(frozen=True, init=False)
+class OneOf[T: Source](Expression[T]):
+    """Represents a random choice between multiple values."""
+
+    values: tuple[Expression[T], ...]
+
+    def __init__(self, *values: Expression[T]):
+        # Проверяем что все выражения из одного источника
+        first_source = values[0].source
+        if not all(v.source == first_source for v in values):
+            raise ValueError("All expressions must have the same source")
+
+        super().__init__(source=first_source)
+        object.__setattr__(self, "values", values)
+
+    @override
+    def __repr__(self) -> str:
+        values_str = ", ".join(str(v) for v in self.values)
+        return f"oneOf({values_str})"
+
+
+@dataclass(frozen=True, init=False)
 class Coalesce[T: Source](Expression[T]):
     """Represents a coalesce function call."""
 

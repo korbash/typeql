@@ -1,24 +1,40 @@
-from typing import override
+from abc import ABC, abstractmethod
+from collections.abc import Mapping
+from random import choice
+from typing import Protocol, Union, Unpack, override, overload
+
+from .expressions import (
+    And,
+    Concat,
+    ConstantBoolean,
+    ConstantNumber,
+    ConstantString,
+    ConstantNull,
+    Divide,
+    Equal,
+    GreaterEqual,
+    GreaterThan,
+    LessEqual,
+    LessThan,
+    Multiply,
+    Not,
+    NotEqual,
+    OneOf,
+    Or,
+    Source,
+    Subtract,
+    Sum,
+)
 from .expressions import (
     Expression as Exp,
-    Relation as R,
-    Source,
-    Sum,
-    Subtract,
-    Multiply,
-    Divide,
-    Concat,
-    Equal,
-    NotEqual,
-    LessThan,
-    LessEqual,
-    GreaterThan,
-    GreaterEqual,
-    ConstantString,
-    ConstantNumber,
 )
-from random import choice
-from abc import ABC, abstractmethod
+from .expressions import (
+    Relation as R,
+)
+
+
+class Sourceble(Protocol):
+    def get_source(self) -> Source: ...
 
 
 class Chain[T: Source](ABC):
@@ -41,19 +57,8 @@ class Chain[T: Source](ABC):
         """If attribute not found, create a Null object"""
         return Null(R(self.exp, name))
 
-    def __or__[K](self, value: K):
-        c = choice((1, 2))
-        if c == 1:
-            return self
-        else:
-            return value
-
-    # def __ror__(self, value: Self):
-    #     c = choice((1, 2))
-    #     if c == 1:
-    #         return value
-    #     else:
-    #         return self
+    def get_source(self):
+        return self.exp.source
 
 
 class DateTime[T: Source](Chain[T]):
@@ -144,6 +149,46 @@ class Bool[T: Source](Chain[T]):
     def id(self):
         return Bool(R(self.exp, "null"))
 
+    def _to_exp(self, other: "Bool[T] | bool", /):
+        """Convert bool or constant to expression"""
+        match other:
+            case Bool():
+                return other.exp
+            case bool():
+                return ConstantBoolean(self.exp.source, other)
+
+    def __and__(self, other: "Bool[T] | bool", /):
+        """Logical AND operator"""
+        return Bool(And(self.exp, self._to_exp(other)))
+
+    def __or__(self, other: "Bool[T] | bool", /):
+        """Logical OR operator"""
+        return Bool(Or(self.exp, self._to_exp(other)))
+
+    def __invert__(self, /):
+        """Logical NOT operator (~)"""
+        return Bool(Not(self.exp))
+
+    def __rand__(self, other: "Bool[T] | bool", /):
+        """Reverse logical AND operator"""
+        return Bool(And(self._to_exp(other), self.exp))
+
+    def __ror__(self, other: "Bool[T] | bool", /):
+        """Reverse logical OR operator"""
+        return Bool(Or(self._to_exp(other), self.exp))
+
+    def and_(self, other: "Bool[T] | bool", /):
+        """Named AND method (Python keyword equivalent)"""
+        return Bool(And(self.exp, self._to_exp(other)))
+
+    def or_(self, other: "Bool[T] | bool", /):
+        """Named OR method (Python keyword equivalent)"""
+        return Bool(Or(self.exp, self._to_exp(other)))
+
+    def not_(self, /):
+        """Named NOT method (Python keyword equivalent)"""
+        return Bool(Not(self.exp))
+
 
 class String[T: Source](Chain[T]):
     """Any String"""
@@ -181,10 +226,48 @@ class Null[T: Source](Chain[T]):
         return Null(R(self.exp, "null"))
 
 
-# class Constant:
-#     @classmethod
-#     def constNumber(cls, source: Source, n: int | float):
-#         return Number((source, n))
+def oneOf[*T](*args: *tuple[*T]):
+    return choice(args)
 
-# def constNumber(source: Source, n: int | float):
-#     return Number(R(source, n))
+
+@overload
+def toChain[S: Source](c: bool, src: S) -> Bool[S]: ...
+@overload
+def toChain[S: Source](c: int | float, src: S) -> Number[S]: ...
+@overload
+def toChain[S: Source](c: str, src: S) -> String[S]: ...
+@overload
+def toChain[S: Source](c: None, src: S) -> Null[S]: ...
+@overload
+def toChain[T: Sourceble, S: Source](c: T, src: S) -> T: ...
+
+
+def toChain[S: Source](c: Sourceble | int | float | str | bool | None, src: Source):
+    if isinstance(c, str):
+        return ConstantString(src, c)
+    elif isinstance(c, bool):
+        return ConstantBoolean(src, c)
+    elif isinstance(c, int | float):
+        return ConstantNumber(src, c)
+    elif c is None:
+        return ConstantNull(src)
+    else:
+        return c
+
+
+def case[
+    S: Source,
+    K: Sourceble | int | float | str | bool | None,
+    K2: Sourceble | int | float | str | bool | None,
+](
+    src: S,
+    conditions: Mapping[Bool[S], K],
+    default: K2 = None,
+):
+    c = choice(tuple(conditions.values()) + (default,))
+    return c, src
+
+
+def case2(src, conditions, default):
+    res = case(src, conditions, default)
+    return toChain(res, src)

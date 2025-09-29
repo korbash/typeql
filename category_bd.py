@@ -1,7 +1,19 @@
 from typing import final, override
+from typing_extensions import overload
 
-from core.core import DateTime, String, Null, Number
-from core.expressions import Expression as Exp, Relation as R, Source
+from core.core import (
+    Bool,
+    Chain,
+    DateTime,
+    String,
+    Null,
+    Number,
+    oneOf,
+    case,
+    toChain,
+    case2,
+)
+from core.expressions import Expression as Exp, OneOf, Relation as R, Source
 
 
 @final
@@ -54,7 +66,7 @@ class Products[T: Source](String[T]):
     @property
     def goodId(self):
         exp = R(self.exp, "goodId")
-        return Goods(exp) | Users(exp)
+        return oneOf(Goods(exp), Users(exp))
 
 
 @final
@@ -127,8 +139,19 @@ b = bd.deals
 print(b.id.exp.source)
 print(bd.deals.sellerId.exp.source)
 print(type(bd.deals.sellerId.exp.source) is type(b.id.exp.source))
-d = b.id + bd.deals.sellerId
-a = 11 + bd.users.age / 0 * 4 > 6
-b = bd.deals.buyerId.id + "qqq"
+d = bd.deals.sellerId.age > 0
+a = 11 + bd.deals.sellerId.age / 0 * 4 == 6 & 2 < 3
+a2 = 11 + bd.deals.sellerId.age / 0 * 4 == 6 & 2 < 5
+b = bd.deals.buyerId.age
 print(b)
 print(a)
+
+res, src = case(b.exp.source, {a: 1, a2: b, d: True}, "ss")
+
+
+res2 = toChain(res, src)
+
+# res3 = case2(b.exp.source, {a: 1, None: b, d: d})
+
+r2 = f(res, b.exp.source)
+t = (1, 2) + (3, 1)
