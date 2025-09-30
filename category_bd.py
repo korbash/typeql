@@ -12,11 +12,20 @@ from core.core import (
     oneOf,
     case,
     toChain,
-    toChainFromTuple,
-    case2,
-    CaseTools,
 )
 from core.expressions import Expression as Exp, OneOf, Relation as R, Source
+
+
+@final
+class Currency[T: Source](String[T]):
+    """currency code one of RUB, EUR, USD"""
+
+    class CurrencySrc(Source): ...
+
+    @property
+    @override
+    def id(self):
+        return String(R(self.exp, "toString"))
 
 
 @final
@@ -36,14 +45,20 @@ class Users[T: Source](String[T]):
 
     @property
     def age(self):
+        """user's age in years"""
         return Number(R(self.exp, "age"))
 
+    @property
+    def email(self):
+        exp = R(self.exp, "email")
+        return oneOf(String(exp), Null(exp))
+
 
 @final
-class Goods[T: Source](String[T]):
-    """good uniq id"""
+class Pets[T: Source](String[T]):
+    """goods of type pet"""
 
-    class GoodsSrc(Source): ...
+    class PetsSrc(Source): ...
 
     @property
     @override
@@ -51,15 +66,40 @@ class Goods[T: Source](String[T]):
         return String(R(self.exp, "toString"))
 
     @property
-    def productId(self):
-        return Products(R(self.exp, "productId"))
+    def type(self):
+        """type of good always 'pet'"""
+        return String(R(self.exp, "type"))
+
+    @property
+    def name(self):
+        return String(R(self.exp, "name"))
+
+    @property
+    def age(self):
+        """age of pet"""
+        return Number(R(self.exp, "age"))
+
+    @property
+    def flyable(self):
+        """is pet can fly"""
+        return Bool(R(self.exp, "flyable"))
+
+    @property
+    def rideable(self):
+        """is pet can ride"""
+        return Bool(R(self.exp, "rideable"))
+
+    @property
+    def bornFrom(self):
+        """egg pet born erom"""
+        return Eggs(R(self.exp, "bornFrom"))
 
 
 @final
-class Products[T: Source](String[T]):
-    """another good uniq id"""
+class Eggs[T: Source](String[T]):
+    """goods of type egg"""
 
-    class ProductsSrc(Source): ...
+    class EggsSrc(Source): ...
 
     @property
     @override
@@ -67,9 +107,13 @@ class Products[T: Source](String[T]):
         return String(R(self.exp, "toString"))
 
     @property
-    def goodId(self):
-        exp = R(self.exp, "goodId")
-        return oneOf(Goods(exp), Users(exp))
+    def type(self):
+        """type of good always 'egg'"""
+        return String(R(self.exp, "type"))
+
+    @property
+    def name(self):
+        return String(R(self.exp, "name"))
 
 
 @final
@@ -84,20 +128,41 @@ class Deals[T: Source](String[T]):
         return String(R(self.exp, "toString"))
 
     @property
-    def buyerId(self):
-        return Users(R(self.exp, "buyerId"))
+    def buyer(self):
+        return Users(R(self.exp, "buyer"))
 
     @property
-    def sellerId(self):
-        return Users(R(self.exp, "sellerId"))
+    def seller(self):
+        return Users(R(self.exp, "seller"))
 
     @property
-    def goodId(self):
-        return Goods(R(self.exp, "goodId"))
+    def good(self):
+        exp = R(self.exp, "good")
+        return oneOf(Pets(exp), Eggs(exp))
 
     @property
     def dealDate(self):
         return DateTime(R(self.exp, "dealDate"))
+
+    @property
+    def buyerPrice(self):
+        return Number(R(self.exp, "buyerPrice"))
+
+    @property
+    def sellerPrice(self):
+        return Number(R(self.exp, "sellerPrice"))
+
+    @property
+    def sellerCurrency(self):
+        return Currency(R(self.exp, "sellerCurrency"))
+
+    @property
+    def buyerCurrency(self):
+        return Currency(R(self.exp, "buyerCurrency"))
+
+    @property
+    def success(self):
+        return Bool(R(self.exp, "success"))
 
 
 class BD:
@@ -110,63 +175,19 @@ class BD:
         return Users(Exp(Users.UsersSrc()))
 
     @property
-    def goods(self):
-        return Goods(Exp(Goods.GoodsSrc()))
+    def pets(self):
+        return Pets(Exp(Pets.PetsSrc()))
 
     @property
-    def products(self):
-        return Goods(Exp(Products.ProductsSrc()))
+    def eggs(self):
+        return Eggs(Exp(Eggs.EggsSrc()))
 
 
 bd = BD()
-buyer_reg_date = bd.deals.buyerId.regDate
-seller_reg_date = bd.deals.sellerId.regDate
-product_chain = bd.deals.goodId.productId.goodId.productId
-user_reg_date = bd.users.regDate
-print(type(buyer_reg_date.exp.source) is type(product_chain.exp.source))
-print(buyer_reg_date.exp.source == product_chain.exp.source)
-print(type(buyer_reg_date.exp.source))
-print(type(product_chain.exp.source))
-# Test examples to show the new Chain pattern
-print("\n=== Chain pattern examples ===")
-print("Deal ID:", bd.deals)
-print("Buyer registration date:", buyer_reg_date)
-print("Seller registration date:", seller_reg_date)
-print("Product chain:", product_chain)
-for i in range(10):
-    a = i * 0.2
-
-a = bd.goods.productId.goodId.productId
-a = product_chain.id
-b = bd.deals
-print(b.id.exp.source)
-print(bd.deals.sellerId.exp.source)
-print(type(bd.deals.sellerId.exp.source) is type(b.id.exp.source))
-d = bd.deals.sellerId.age > 0
-a = 11 + bd.deals.sellerId.age / 0 * 4 == 6 & 2 < 3
-a2 = 11 + bd.deals.sellerId.age / 0 * 4 == 6 & 2 < 5
-b = bd.deals.buyerId.age
-print(b)
-print(a)
-
-# ch = toChain("ss", a.get_source())
-
-r = case({a: 1, a2: b, d: True}, "ss")
-val, src = r
-res2 = toChain(val, src)
-# res3 = caseToChain({a: 1, a2: b, d: True}, "ss")
-print(bd.deals.get_source())
-
-# res3 = c.get()
-
-# res3 = toChain(*case({a: 1, a2: b, d: True}, "ss"))
-res4 = toChainFromTuple(case({a: 1, a2: b, d: True}, "ss"))
-# res3 = case2({a: 1, None: b, d: d})
-
-# r2 = f(res, b.exp.source)
-# t = (1, 3) + (3, 1)
-
-# if isinstance(a, Sourceble):
-#     print(1)
-# else:
-#     print(2)
+d = bd.deals
+seller_age = d.seller.age
+buyer_age = d.buyer.age
+success_deals = toChain(case({d.success: d}))
+spend = success_deals.buyerPrice
+buyers = success_deals.buyer
+sellers = success_deals.seller

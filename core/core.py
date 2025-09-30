@@ -177,18 +177,6 @@ class Bool[T: Source](Chain[T]):
         """Reverse logical OR operator"""
         return Bool(Or(self._to_exp(other), self.exp))
 
-    def and_(self, other: "Bool[T] | bool", /):
-        """Named AND method (Python keyword equivalent)"""
-        return Bool(And(self.exp, self._to_exp(other)))
-
-    def or_(self, other: "Bool[T] | bool", /):
-        """Named OR method (Python keyword equivalent)"""
-        return Bool(Or(self.exp, self._to_exp(other)))
-
-    def not_(self, /):
-        """Named NOT method (Python keyword equivalent)"""
-        return Bool(Not(self.exp))
-
 
 class String[T: Source](Chain[T]):
     """Any String"""
@@ -230,31 +218,6 @@ def oneOf[*T](*args: *tuple[*T]):
     return choice(args)
 
 
-@overload
-def toChain[S: Source](c: bool, src: S) -> Bool[S]: ...
-@overload
-def toChain[S: Source](c: int | float, src: S) -> Number[S]: ...
-@overload
-def toChain[S: Source](c: str, src: S) -> String[S]: ...
-@overload
-def toChain[S: Source](c: None, src: S) -> Null[S]: ...
-@overload
-def toChain[T: Sourceble, S: Source](c: T, src: S) -> T: ...
-
-
-def toChain[S: Source](c: Sourceble | int | float | str | bool | None, src: Source):
-    if isinstance(c, str):
-        return ConstantString(src, c)
-    elif isinstance(c, bool):
-        return ConstantBoolean(src, c)
-    elif isinstance(c, int | float):
-        return ConstantNumber(src, c)
-    elif c is None:
-        return ConstantNull(src)
-    else:
-        return c
-
-
 def case[
     S: Source,
     K: Sourceble | int | float | str | bool | None,
@@ -270,35 +233,31 @@ def case[
 
 
 @overload
-def toChainFromTuple[S: Source](t: tuple[bool, S]) -> Bool[S]: ...
+def toChain[S: Source](t: tuple[bool, S]) -> Bool[S]: ...
 @overload
-def toChainFromTuple[S: Source](t: tuple[int, S]) -> Number[S]: ...
+def toChain[S: Source](t: tuple[int, S]) -> Number[S]: ...
 @overload
-def toChainFromTuple[S: Source](t: tuple[float, S]) -> Number[S]: ...
+def toChain[S: Source](t: tuple[float, S]) -> Number[S]: ...
 @overload
-def toChainFromTuple[S: Source](t: tuple[str, S]) -> String[S]: ...
+def toChain[S: Source](t: tuple[str, S]) -> String[S]: ...
 @overload
-def toChainFromTuple[S: Source](t: tuple[None, S]) -> Null[S]: ...
+def toChain[S: Source](t: tuple[None, S]) -> Null[S]: ...
 @overload
-def toChainFromTuple[T: Sourceble, S: Source](t: tuple[T, S]) -> T: ...
+def toChain[T: Sourceble, S: Source](t: tuple[T, S]) -> T: ...
 
 
-def toChainFromTuple[S: Source](
+def toChain[S: Source](
     t: tuple[Sourceble | int | float | str | bool | None, Source],
 ):
     """Принимает tuple из case и сохраняет специфичность типов toChain"""
     c, src = t
-    return toChain(c, src)
-
-
-def caseToChain[
-    S: Source,
-    K: Sourceble | int | float | str | bool | None,
-    K2: Sourceble | int | float | str | bool | None,
-](
-    conditions: Mapping[Bool[S], K],
-    default: K2 = None,
-):
-    """Объединяет case и toChain в одну операцию"""
-    c, src = case(conditions, default)
-    return toChain(c, src)
+    if isinstance(c, str):
+        return ConstantString(src, c)
+    elif isinstance(c, bool):
+        return ConstantBoolean(src, c)
+    elif isinstance(c, int | float):
+        return ConstantNumber(src, c)
+    elif c is None:
+        return ConstantNull(src)
+    else:
+        return c
