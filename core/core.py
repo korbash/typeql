@@ -260,14 +260,45 @@ def case[
     K: Sourceble | int | float | str | bool | None,
     K2: Sourceble | int | float | str | bool | None,
 ](
-    src: S,
+    # src: S,
     conditions: Mapping[Bool[S], K],
     default: K2 = None,
 ):
     c = choice(tuple(conditions.values()) + (default,))
+    src = list(conditions.keys())[0].get_source()
     return c, src
 
 
-def case2(src, conditions, default):
-    res = case(src, conditions, default)
-    return toChain(res, src)
+@overload
+def toChainFromTuple[S: Source](t: tuple[bool, S]) -> Bool[S]: ...
+@overload
+def toChainFromTuple[S: Source](t: tuple[int, S]) -> Number[S]: ...
+@overload
+def toChainFromTuple[S: Source](t: tuple[float, S]) -> Number[S]: ...
+@overload
+def toChainFromTuple[S: Source](t: tuple[str, S]) -> String[S]: ...
+@overload
+def toChainFromTuple[S: Source](t: tuple[None, S]) -> Null[S]: ...
+@overload
+def toChainFromTuple[T: Sourceble, S: Source](t: tuple[T, S]) -> T: ...
+
+
+def toChainFromTuple[S: Source](
+    t: tuple[Sourceble | int | float | str | bool | None, Source],
+):
+    """Принимает tuple из case и сохраняет специфичность типов toChain"""
+    c, src = t
+    return toChain(c, src)
+
+
+def caseToChain[
+    S: Source,
+    K: Sourceble | int | float | str | bool | None,
+    K2: Sourceble | int | float | str | bool | None,
+](
+    conditions: Mapping[Bool[S], K],
+    default: K2 = None,
+):
+    """Объединяет case и toChain в одну операцию"""
+    c, src = case(conditions, default)
+    return toChain(c, src)

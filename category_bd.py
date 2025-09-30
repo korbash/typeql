@@ -5,13 +5,16 @@ from core.core import (
     Bool,
     Chain,
     DateTime,
+    Sourceble,
     String,
     Null,
     Number,
     oneOf,
     case,
     toChain,
+    toChainFromTuple,
     case2,
+    CaseTools,
 )
 from core.expressions import Expression as Exp, OneOf, Relation as R, Source
 
@@ -146,12 +149,24 @@ b = bd.deals.buyerId.age
 print(b)
 print(a)
 
-res, src = case(b.exp.source, {a: 1, a2: b, d: True}, "ss")
+# ch = toChain("ss", a.get_source())
 
+r = case({a: 1, a2: b, d: True}, "ss")
+val, src = r
+res2 = toChain(val, src)
+# res3 = caseToChain({a: 1, a2: b, d: True}, "ss")
+print(bd.deals.get_source())
 
-res2 = toChain(res, src)
+# res3 = c.get()
 
-# res3 = case2(b.exp.source, {a: 1, None: b, d: d})
+# res3 = toChain(*case({a: 1, a2: b, d: True}, "ss"))
+res4 = toChainFromTuple(case({a: 1, a2: b, d: True}, "ss"))
+# res3 = case2({a: 1, None: b, d: d})
 
-r2 = f(res, b.exp.source)
-t = (1, 2) + (3, 1)
+# r2 = f(res, b.exp.source)
+# t = (1, 3) + (3, 1)
+
+# if isinstance(a, Sourceble):
+#     print(1)
+# else:
+#     print(2)
