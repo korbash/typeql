@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from random import choice
-from typing import Protocol, Union, Unpack, override, overload
+from typing import Protocol, override, overload
 
 from .expressions import (
     And,
@@ -177,6 +177,14 @@ class Bool[T: Source](Chain[T]):
         """Reverse logical OR operator"""
         return Bool(Or(self._to_exp(other), self.exp))
 
+    def __eq__(self, other: "Bool[T] | bool", /):
+        """Equality comparison operator"""
+        return Bool(Equal(self.exp, self._to_exp(other)))
+
+    def __ne__(self, other: "Bool[T] | bool", /):
+        """Not equal comparison operator"""
+        return Bool(NotEqual(self.exp, self._to_exp(other)))
+
 
 class String[T: Source](Chain[T]):
     """Any String"""
@@ -202,6 +210,14 @@ class String[T: Source](Chain[T]):
     def __radd__(self, other: "String[T] | str", /):
         return String(Concat(self._to_exp(other), self.exp))
 
+    def __eq__(self, other: "String[T] | str", /):
+        """Equality comparison operator"""
+        return Bool(Equal(self.exp, self._to_exp(other)))
+
+    def __ne__(self, other: "String[T] | str", /):
+        """Not equal comparison operator"""
+        return Bool(NotEqual(self.exp, self._to_exp(other)))
+
 
 class Null[T: Source](Chain[T]):
     """Any Null"""
@@ -212,6 +228,70 @@ class Null[T: Source](Chain[T]):
     @override
     def id(self):
         return Null(R(self.exp, "null"))
+
+    def _to_null(self, other: object, /):
+        """Any operation with null returns null"""
+        return Null(R(self.exp, "null"))
+
+    # Arithmetic operations
+    def __add__(self, other: object, /):
+        return self._to_null(other)
+
+    def __radd__(self, other: object, /):
+        return self._to_null(other)
+
+    def __sub__(self, other: object, /):
+        return self._to_null(other)
+
+    def __rsub__(self, other: object, /):
+        return self._to_null(other)
+
+    def __mul__(self, other: object, /):
+        return self._to_null(other)
+
+    def __rmul__(self, other: object, /):
+        return self._to_null(other)
+
+    def __truediv__(self, other: object, /):
+        return self._to_null(other)
+
+    def __rtruediv__(self, other: object, /):
+        return self._to_null(other)
+
+    # Comparison operations
+    def __eq__(self, other: object, /):
+        return self._to_null(other)
+
+    def __ne__(self, other: object, /):
+        return self._to_null(other)
+
+    def __lt__(self, other: object, /):
+        return self._to_null(other)
+
+    def __le__(self, other: object, /):
+        return self._to_null(other)
+
+    def __gt__(self, other: object, /):
+        return self._to_null(other)
+
+    def __ge__(self, other: object, /):
+        return self._to_null(other)
+
+    # Logical operations
+    def __and__(self, other: object, /):
+        return self._to_null(other)
+
+    def __or__(self, other: object, /):
+        return self._to_null(other)
+
+    def __invert__(self, /):
+        return self._to_null(None)
+
+    def __rand__(self, other: object, /):
+        return self._to_null(other)
+
+    def __ror__(self, other: object, /):
+        return self._to_null(other)
 
 
 def oneOf[*T](*args: *tuple[*T]):

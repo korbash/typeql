@@ -189,5 +189,6 @@ seller_age = d.seller.age
 buyer_age = d.buyer.age
 success_deals = toChain(case({d.success: d}))
 spend = success_deals.buyerPrice
+income = success_deals.buyerPrice - success_deals.sellerPrice
 buyers = success_deals.buyer
 sellers = success_deals.seller
