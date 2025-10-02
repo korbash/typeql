@@ -1,3 +1,4 @@
+import datetime
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from random import choice
@@ -8,6 +9,7 @@ from .expressions import (
     Case,
     Concat,
     ConstantBoolean,
+    ConstantDateTime,
     ConstantNumber,
     ConstantString,
     ConstantNull,
@@ -91,6 +93,38 @@ class DateTime[T: Source](Chain[T]):
     @override
     def id(self):
         return DateTime(R(self.exp, "null"))
+
+    def _to_exp(self, other: "DateTime[T] | datetime.datetime", /):
+        """Convert datetime or constant to expression"""
+        match other:
+            case DateTime():
+                return other.exp
+            case datetime.datetime():
+                return ConstantDateTime(self.exp.source, other)
+
+    def __lt__(self, other: "DateTime[T] | datetime.datetime", /):
+        """Less than comparison operator"""
+        return Bool(LessThan(self.exp, self._to_exp(other)))
+
+    def __le__(self, other: "DateTime[T] | datetime.datetime", /):
+        """Less than or equal comparison operator"""
+        return Bool(LessEqual(self.exp, self._to_exp(other)))
+
+    def __gt__(self, other: "DateTime[T] | datetime.datetime", /):
+        """Greater than comparison operator"""
+        return Bool(GreaterThan(self.exp, self._to_exp(other)))
+
+    def __ge__(self, other: "DateTime[T] | datetime.datetime", /):
+        """Greater than or equal comparison operator"""
+        return Bool(GreaterEqual(self.exp, self._to_exp(other)))
+
+    def ne(self, other: "DateTime[T] | datetime.datetime"):
+        """Not equal comparison operator"""
+        return Bool(NotEqual(self.exp, self._to_exp(other)))
+
+    def eq(self, other: "DateTime[T] | datetime.datetime"):
+        """Equal comparison operator"""
+        return Bool(Equal(self.exp, self._to_exp(other)))
 
 
 class Number[T: Source](Chain[T]):
@@ -321,24 +355,25 @@ def oneOf[*T](*args: *tuple[*T]):
 
 def case[
     S: Source,
-    K: Sourceble | int | float | str | bool | None,
-    K2: Sourceble | int | float | str | bool | None,
+    K: Sourceble | int | float | str | bool | datetime.datetime | None,
+    K2: Sourceble | int | float | str | bool | datetime.datetime | None,
 ](
     # src: S,
     conditions: Mapping[Bool[S], K],
     default: K2 = None,
 ):
     c = choice(tuple(conditions.values()) + (default,))
-    src = list(conditions.keys())[0].get_source()
 
     # Создаем выражение Case
-    def _to_expression(value: K | K2, source: S) -> Exp[S]:
+    def _to_expression(value: K | datetime.datetime | K2, source: S) -> Exp[S]:
         if isinstance(value, str):
             return ConstantString(source, value)
         elif isinstance(value, bool):
             return ConstantBoolean(source, value)
         elif isinstance(value, (int, float)):
             return ConstantNumber(source, value)
+        elif isinstance(value, datetime.datetime):
+            return ConstantDateTime(source, value)
         elif value is None:
             return ConstantNull(source)
         elif isinstance(value, Sourceble):
@@ -347,38 +382,41 @@ def case[
             raise TypeError(f"Unsupported type for case value: {type(value)}")
 
     # Преобразуем условия в кортежи выражений
+    src = list(conditions.keys())[0].get_source()
     conditions_exp = {k.exp: _to_expression(v, src) for k, v in conditions.items()}
     default_exp = _to_expression(default, src)
     case_exp = Case(conditions_exp, default_exp)
 
-    return c, src, case_exp
+    return c, case_exp
 
 
 @overload
-def toChain[S: Source](t: tuple[bool, S, Exp[S]]) -> Bool[S]: ...
+def toChain[S: Source](t: tuple[bool, Exp[S]]) -> Bool[S]: ...
 @overload
-def toChain[S: Source](t: tuple[int, S, Exp[S]]) -> Number[S]: ...
+def toChain[S: Source](t: tuple[int | float, Exp[S]]) -> Number[S]: ...
 @overload
-def toChain[S: Source](t: tuple[float, S, Exp[S]]) -> Number[S]: ...
+def toChain[S: Source](t: tuple[str, Exp[S]]) -> String[S]: ...
 @overload
-def toChain[S: Source](t: tuple[str, S, Exp[S]]) -> String[S]: ...
+def toChain[S: Source](t: tuple[datetime.datetime, Exp[S]]) -> DateTime[S]: ...
 @overload
-def toChain[S: Source](t: tuple[None, S, Exp[S]]) -> Null[S]: ...
+def toChain[S: Source](t: tuple[None, Exp[S]]) -> Null[S]: ...
 @overload
-def toChain[T: Sourceble, S: Source](t: tuple[T, S, Exp[S]]) -> T: ...
+def toChain[T: Sourceble, S: Source](t: tuple[T, Exp[S]]) -> T: ...
 
 
 def toChain[S: Source](
-    t: tuple[Sourceble | int | float | str | bool | None, S, Exp[S]],
+    t: tuple[Sourceble | int | float | str | bool | datetime.datetime | None, Exp[S]],
 ):
     """Принимает tuple из case и сохраняет специфичность типов toChain"""
-    c, src, exp = t
+    c, exp = t
     if isinstance(c, str):
         return String(exp)
     elif isinstance(c, bool):
         return Bool(exp)
     elif isinstance(c, int | float):
         return Number(exp)
+    elif isinstance(c, datetime.datetime):
+        return DateTime(exp)
     elif c is None:
         return Null(exp)
     else:

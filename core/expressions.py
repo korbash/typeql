@@ -12,6 +12,7 @@ class Source:
     def __repr__(self) -> str:
         return self.name
 
+    @override
     def __hash__(self):
         return hash(self.name)
 
