@@ -1,11 +1,8 @@
 from typing import final, override
-from typing_extensions import overload
 
 from core.core import (
     Bool,
-    Chain,
     DateTime,
-    Sourceble,
     String,
     Null,
     Number,
@@ -13,7 +10,7 @@ from core.core import (
     case,
     toChain,
 )
-from core.expressions import Expression as Exp, OneOf, Relation as R, Source
+from core.expressions import Expression as Exp, Relation as R, Source
 
 
 @final
@@ -187,8 +184,11 @@ bd = BD()
 d = bd.deals
 seller_age = d.seller.age
 buyer_age = d.buyer.age
-success_deals = toChain(case({d.success: d}))
+cond = d.buyerCurrency.eq("rub")
+c1 = case({d.success & d.buyerCurrency.eq("rub"): d})
+success_deals = toChain(case({d.success & d.buyerCurrency.eq("rub"): d}))
 spend = success_deals.buyerPrice
 income = success_deals.buyerPrice - success_deals.sellerPrice
 buyers = success_deals.buyer
 sellers = success_deals.seller
+print(income)

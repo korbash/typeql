@@ -12,6 +12,9 @@ class Source:
     def __repr__(self) -> str:
         return self.name
 
+    def __hash__(self):
+        return hash(self.name)
+
 
 @dataclass(frozen=True)
 class Expression[T: Source]:
@@ -384,6 +387,39 @@ class OneOf[T: Source](Expression[T]):
     def __repr__(self) -> str:
         values_str = ", ".join(str(v) for v in self.values)
         return f"oneOf({values_str})"
+
+
+@dataclass(frozen=True, init=False)
+class Case[T: Source](Expression[T]):
+    """Represents a case/when expression."""
+
+    conditions: dict[Expression[T], Expression[T]]
+    default: Expression[T] | None
+
+    def __init__(
+        self,
+        conditions: dict[Expression[T], Expression[T]],
+        default: Expression[T] | None = None,
+    ):
+        # Проверяем что все выражения из одного источника
+        all_expressions = list(conditions.keys()) + list(conditions.values())
+        if default:
+            all_expressions.append(default)
+
+        if not all_expressions:
+            raise ValueError("At least one condition must be provided")
+
+        first_source = all_expressions[0].source
+        if not all(expr.source == first_source for expr in all_expressions):
+            raise ValueError("All expressions must have the same source")
+
+        super().__init__(source=first_source)
+        object.__setattr__(self, "conditions", conditions)
+        object.__setattr__(self, "default", default)
+
+    @override
+    def __repr__(self) -> str:
+        return f"case({self.conditions}, {self.default})"
 
 
 @dataclass(frozen=True, init=False)
