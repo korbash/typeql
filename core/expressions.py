@@ -444,20 +444,14 @@ class Coalesce[T: Source](Expression[T]):
         return f"coalesce({values_str})"
 
 
-# @dataclass(frozen=True, init=False)
-# class Stack[T: Source](Expression[T]):
-#     values: tuple[Expression[T], ...]
+@dataclass(frozen=True)
+class AggSum[T: Source, K: Source](Expression[T]):
+    """Represents a sum function call."""
 
-#     def __init__(self, *values: Expression[T]):
-#         # Проверяем что все выражения из одного источника
-#         first_source = values[0].source
-#         if not all(v.source is first_source for v in values):
-#             raise ValueError("All expressions must have the same source")
+    source: T
+    metrica: Expression[K]
+    path: Expression[K]
 
-#         super().__init__(source=first_source)
-#         object.__setattr__(self, "values", values)
-
-#     @override
-#     def __repr__(self) -> str:
-#         values_str = ", ".join(str(v) for v in self.values)
-#         return f"stack({values_str})"
+    @override
+    def __repr__(self) -> str:
+        return f"sum({self.metrica})"

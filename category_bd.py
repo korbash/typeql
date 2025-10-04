@@ -17,24 +17,34 @@ from core.expressions import Expression as Exp, Relation as R, Source
 class Currency[T: Source](String[T]):
     """currency code one of RUB, EUR, USD"""
 
-    class CurrencySrc(Source): ...
+    class CurrencySrc(String.StringSrc): ...
 
     @property
     @override
     def id(self):
         return String(R(self.exp, "toString"))
+
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.CurrencySrc()
 
 
 @final
 class Users[T: Source](String[T]):
     """user uniq id"""
 
-    class UsersSrc(Source): ...
+    class UsersSrc(String.StringSrc): ...
 
     @property
     @override
     def id(self):
         return String(R(self.exp, "toString"))
+
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.UsersSrc()
 
     @property
     def regDate(self):
@@ -55,12 +65,17 @@ class Users[T: Source](String[T]):
 class Pets[T: Source](String[T]):
     """goods of type pet"""
 
-    class PetsSrc(Source): ...
+    class PetsSrc(String.StringSrc): ...
 
     @property
     @override
     def id(self):
         return String(R(self.exp, "toString"))
+
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.PetsSrc()
 
     @property
     def type(self):
@@ -103,6 +118,11 @@ class Eggs[T: Source](String[T]):
     def id(self):
         return String(R(self.exp, "toString"))
 
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.EggsSrc()
+
     @property
     def type(self):
         """type of good always 'egg'"""
@@ -117,7 +137,7 @@ class Eggs[T: Source](String[T]):
 class Deals[T: Source](String[T]):
     """deal uniq id"""
 
-    class DealsSrc(Source): ...
+    class DealsSrc(String.StringSrc): ...
 
     @property
     @override
@@ -161,6 +181,11 @@ class Deals[T: Source](String[T]):
     def success(self):
         return Bool(R(self.exp, "success"))
 
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.DealsSrc()
+
 
 class BD:
     @property
@@ -186,9 +211,11 @@ seller_age = d.seller.age
 buyer_age = d.buyer.age
 cond = d.buyerCurrency.eq("rub")
 c1 = case({d.success & d.buyerCurrency.eq("rub"): d})
-success_deals = toChain(case({d.success & d.buyerCurrency.eq("rub"): d}))
+success_deals = toChain(case({d.success & d.buyerCurrency.eq("rub"): d}, d))
 spend = success_deals.buyerPrice
 income = success_deals.buyerPrice - success_deals.sellerPrice
 buyers = success_deals.buyer
 sellers = success_deals.seller
+s = income.sum(buyers)
+s2 = s - bd.users.age
 print(income)

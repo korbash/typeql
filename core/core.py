@@ -2,7 +2,7 @@ import datetime
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from random import choice
-from typing import Protocol, override, overload, runtime_checkable
+from typing import Protocol, override, overload, runtime_checkable, Self, Any
 
 from .expressions import (
     And,
@@ -26,6 +26,7 @@ from .expressions import (
     Source,
     Subtract,
     Sum,
+    AggSum,
 )
 from .expressions import (
     Expression as Exp,
@@ -39,11 +40,22 @@ from .expressions import (
 class Sourceble(Protocol):
     def get_source(self) -> Source: ...
 
+    # def get_self_type(self) -> Source: ...
+
     # def get_expression(self) -> Exp[Source]: ...
 
     # def eq(self, other) -> "Bool[Source]": ...
 
     # def ne(self, other) -> "Bool[Source]": ...
+
+
+@runtime_checkable
+class SourcebleGN[S: Source, SS: Source](Protocol):
+    def get_source(self) -> S: ...
+
+    def get_self_type(self) -> SS: ...
+
+    def get_expression(self) -> Exp[S]: ...
 
 
 class Chain[T: Source](ABC):
@@ -72,6 +84,10 @@ class Chain[T: Source](ABC):
     def get_expression(self):
         return self.exp
 
+    @classmethod
+    def get_self_type(cls):
+        return cls.ChainSrc()
+
     @override
     def __hash__(self):
         """Hash based on the expression"""
@@ -87,12 +103,18 @@ class Chain[T: Source](ABC):
 class DateTime[T: Source](Chain[T]):
     """Any Date"""
 
-    class DateTimeSrc(Source): ...
+    class DateTimeSrc(Chain.ChainSrc):
+        """Source for DateTime"""
 
     @property
     @override
     def id(self):
         return DateTime(R(self.exp, "null"))
+
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.DateTimeSrc()
 
     def _to_exp(self, other: "DateTime[T] | datetime.datetime", /):
         """Convert datetime or constant to expression"""
@@ -130,12 +152,21 @@ class DateTime[T: Source](Chain[T]):
 class Number[T: Source](Chain[T]):
     """Any Number"""
 
-    class NumberSrc(Source): ...
+    class NumberSrc(Chain.ChainSrc): ...
 
     @property
     @override
     def id(self):
         return Number(R(self.exp, "null"))
+
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.NumberSrc()
+
+    def sum[U: Source](self, path: SourcebleGN[T, U]):
+        exp = AggSum(path.get_self_type(), self.exp, path.get_expression())
+        return Number(AggSum(path.get_self_type(), self.exp, path.get_expression()))
 
     def _to_exp(self, other: "Number[T] | int | float", /):
         """Convert number or constant to expression"""
@@ -197,12 +228,17 @@ class Number[T: Source](Chain[T]):
 class Bool[T: Source](Chain[T]):
     """Bool"""
 
-    class BoolSrc(Source): ...
+    class BoolSrc(Chain.ChainSrc): ...
 
     @property
     @override
     def id(self):
         return Bool(R(self.exp, "null"))
+
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.BoolSrc()
 
     def _to_exp(self, other: "Bool[T] | bool", /):
         """Convert bool or constant to expression"""
@@ -251,6 +287,11 @@ class String[T: Source](Chain[T]):
     def id(self):
         return String(R(self.exp, "null"))
 
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.StringSrc()
+
     def _to_exp(self, other: "String[T] | str"):
         """Convert string or constant to expression"""
         match other:
@@ -277,12 +318,17 @@ class String[T: Source](Chain[T]):
 class Null[T: Source](Chain[T]):
     """Any Null"""
 
-    class NullSrc(Source): ...
+    class NullSrc(Chain.ChainSrc): ...
 
     @property
     @override
     def id(self):
         return Null(R(self.exp, "null"))
+
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.NullSrc()
 
     def _to_null(self, other: object, /):
         """Any operation with null returns null"""
@@ -421,3 +467,7 @@ def toChain[S: Source](
         return Null(exp)
     else:
         return c
+
+
+def sum[S: Source](metrica: Chain[S], way: Chain[S]):
+    return type(way)
