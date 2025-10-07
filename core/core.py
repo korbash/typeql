@@ -27,6 +27,9 @@ from .expressions import (
     Subtract,
     Sum,
     AggSum,
+    AggAvg,
+    AggCount,
+    AggUniq,
 )
 from .expressions import (
     Expression as Exp,
@@ -87,6 +90,12 @@ class Chain[T: Source](ABC):
     @classmethod
     def get_self_type(cls):
         return cls.ChainSrc()
+
+    def _count[U: Source](self, path: SourcebleGN[T, U]):
+        return Number(AggCount(path.get_self_type(), self.exp, path.get_expression()))
+
+    def _uniq[U: Source](self, path: SourcebleGN[T, U]):
+        return Number(AggUniq(path.get_self_type(), self.exp, path.get_expression()))
 
     @override
     def __hash__(self):
@@ -164,9 +173,11 @@ class Number[T: Source](Chain[T]):
     def get_self_type(cls):
         return cls.NumberSrc()
 
-    def sum[U: Source](self, path: SourcebleGN[T, U]):
-        exp = AggSum(path.get_self_type(), self.exp, path.get_expression())
+    def _sum[U: Source](self, path: SourcebleGN[T, U]):
         return Number(AggSum(path.get_self_type(), self.exp, path.get_expression()))
+
+    def _avg[U: Source](self, path: SourcebleGN[T, U]):
+        return Number(AggAvg(path.get_self_type(), self.exp, path.get_expression()))
 
     def _to_exp(self, other: "Number[T] | int | float", /):
         """Convert number or constant to expression"""
@@ -280,7 +291,7 @@ class Bool[T: Source](Chain[T]):
 class String[T: Source](Chain[T]):
     """Any String"""
 
-    class StringSrc(Source): ...
+    class StringSrc(Chain.ChainSrc): ...
 
     @property
     @override
@@ -448,8 +459,6 @@ def toChain[S: Source](t: tuple[datetime.datetime, Exp[S]]) -> DateTime[S]: ...
 def toChain[S: Source](t: tuple[None, Exp[S]]) -> Null[S]: ...
 @overload
 def toChain[T: Sourceble, S: Source](t: tuple[T, Exp[S]]) -> T: ...
-
-
 def toChain[S: Source](
     t: tuple[Sourceble | int | float | str | bool | datetime.datetime | None, Exp[S]],
 ):
@@ -469,5 +478,17 @@ def toChain[S: Source](
         return c
 
 
-def sum[S: Source](metrica: Chain[S], way: Chain[S]):
-    return type(way)
+def aggSum[S: Source](metrica, way):
+    return metrica._sum(way)
+
+
+def aggAvg[S: Source](metrica, way):
+    return metrica._avg(way)
+
+
+def aggCount[S: Source](metrica, way):
+    return metrica._count(way)
+
+
+def aggUniq[S: Source](metrica, way):
+    return metrica._uniq(way)

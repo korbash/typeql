@@ -6,9 +6,11 @@ from core.core import (
     String,
     Null,
     Number,
+    aggUniq,
     oneOf,
     case,
     toChain,
+    aggSum,
 )
 from core.expressions import Expression as Exp, Relation as R, Source
 
@@ -216,6 +218,7 @@ spend = success_deals.buyerPrice
 income = success_deals.buyerPrice - success_deals.sellerPrice
 buyers = success_deals.buyer
 sellers = success_deals.seller
-s = income.sum(buyers)
+s = income._sum(buyers)
 s2 = s - bd.users.age
-print(income)
+s3 = aggUniq(d, buyers)
+print(s3)

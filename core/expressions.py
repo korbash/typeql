@@ -454,4 +454,43 @@ class AggSum[T: Source, K: Source](Expression[T]):
 
     @override
     def __repr__(self) -> str:
-        return f"sum({self.metrica})"
+        return f"sum({self.metrica}, {self.path})"
+
+
+@dataclass(frozen=True)
+class AggAvg[T: Source, K: Source](Expression[T]):
+    """Represents an average function call."""
+
+    source: T
+    metrica: Expression[K]
+    path: Expression[K]
+
+    @override
+    def __repr__(self) -> str:
+        return f"avg({self.metrica}, {self.path})"
+
+
+@dataclass(frozen=True)
+class AggCount[T: Source, K: Source](Expression[T]):
+    """Represents a count function call."""
+
+    source: T
+    metrica: Expression[K]
+    path: Expression[K]
+
+    @override
+    def __repr__(self) -> str:
+        return f"count({self.metrica}, {self.path})"
+
+
+@dataclass(frozen=True)
+class AggUniq[T: Source, K: Source](Expression[T]):
+    """Represents a count distinct function call."""
+
+    source: T
+    metrica: Expression[K]
+    path: Expression[K]
+
+    @override
+    def __repr__(self) -> str:
+        return f"uniq({self.metrica}, {self.path})"
