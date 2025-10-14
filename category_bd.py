@@ -3,6 +3,13 @@ from typing import final, override
 from core.core import (
     Bool,
     DateTime,
+    DateHour,
+    DateDay,
+    DateWeek,
+    DateMonth,
+    DateYear,
+    DateSecond,
+    DateMinute,
     String,
     Null,
     Number,
@@ -211,14 +218,17 @@ bd = BD()
 d = bd.deals
 seller_age = d.seller.age
 buyer_age = d.buyer.age
+
+d.seller
 cond = d.buyerCurrency.eq("rub")
 c1 = case({d.success & d.buyerCurrency.eq("rub"): d})
-success_deals = toChain(case({d.success & d.buyerCurrency.eq("rub"): d}, d))
+success_deals = toChain(case({d.success & d.buyerCurrency.eq("rub"): d}, None))
 spend = success_deals.buyerPrice
 income = success_deals.buyerPrice - success_deals.sellerPrice
 buyers = success_deals.buyer
 sellers = success_deals.seller
-s = income._sum(buyers)
+day = d.dealDate.day()
+s = income._sum(d.buyer)
 s2 = s - bd.users.age
-s3 = aggUniq(d, buyers)
+s3 = aggUniq(income, d.dealDate.day())
 print(s3)

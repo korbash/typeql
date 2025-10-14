@@ -157,6 +157,153 @@ class DateTime[T: Source](Chain[T]):
         """Equal comparison operator"""
         return Bool(Equal(self.exp, self._to_exp(other)))
 
+    def hour(self) -> "DateHour[T]":
+        """Extract hour from datetime"""
+        return DateHour(R(self.exp, "hour"))
+
+    def day(self) -> "DateDay[T]":
+        """Extract day from datetime"""
+        return DateDay(R(self.exp, "day"))
+
+    def week(self) -> "DateWeek[T]":
+        """Extract week from datetime"""
+        return DateWeek(R(self.exp, "week"))
+
+    def month(self) -> "DateMonth[T]":
+        """Extract month from datetime"""
+        return DateMonth(R(self.exp, "month"))
+
+    def year(self) -> "DateYear[T]":
+        """Extract year from datetime"""
+        return DateYear(R(self.exp, "year"))
+
+    def second(self) -> "DateSecond[T]":
+        """Extract second from datetime"""
+        return DateSecond(R(self.exp, "second"))
+
+    def minute(self) -> "DateMinute[T]":
+        """Extract minute from datetime"""
+        return DateMinute(R(self.exp, "minute"))
+
+
+class DateHour[T: Source](DateTime[T]):
+    """Hour part of DateTime"""
+
+    class DateHourSrc(DateTime.DateTimeSrc):
+        """Source for DateHour"""
+
+    @property
+    @override
+    def id(self):
+        return DateTime(R(self.exp, "null"))
+
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.DateHourSrc()
+
+
+class DateDay[T: Source](DateTime[T]):
+    """Day part of DateTime"""
+
+    class DateDaySrc(DateTime.DateTimeSrc):
+        """Source for DateDay"""
+
+    @property
+    @override
+    def id(self):
+        return DateTime(R(self.exp, "null"))
+
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.DateDaySrc()
+
+
+class DateWeek[T: Source](DateTime[T]):
+    """Week part of DateTime"""
+
+    class DateWeekSrc(DateTime.DateTimeSrc):
+        """Source for DateWeek"""
+
+    @property
+    @override
+    def id(self):
+        return DateTime(R(self.exp, "null"))
+
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.DateWeekSrc()
+
+
+class DateMonth[T: Source](DateTime[T]):
+    """Month part of DateTime"""
+
+    class DateMonthSrc(DateTime.DateTimeSrc):
+        """Source for DateMonth"""
+
+    @property
+    @override
+    def id(self):
+        return DateTime(R(self.exp, "null"))
+
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.DateMonthSrc()
+
+
+class DateYear[T: Source](DateTime[T]):
+    """Year part of DateTime"""
+
+    class DateYearSrc(DateTime.DateTimeSrc):
+        """Source for DateYear"""
+
+    @property
+    @override
+    def id(self):
+        return DateTime(R(self.exp, "null"))
+
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.DateYearSrc()
+
+
+class DateSecond[T: Source](DateTime[T]):
+    """Second part of DateTime"""
+
+    class DateSecondSrc(DateTime.DateTimeSrc):
+        """Source for DateSecond"""
+
+    @property
+    @override
+    def id(self):
+        return DateTime(R(self.exp, "null"))
+
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.DateSecondSrc()
+
+
+class DateMinute[T: Source](DateTime[T]):
+    """Minute part of DateTime"""
+
+    class DateMinuteSrc(DateTime.DateTimeSrc):
+        """Source for DateMinute"""
+
+    @property
+    @override
+    def id(self):
+        return DateTime(R(self.exp, "null"))
+
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.DateMinuteSrc()
+
 
 class Number[T: Source](Chain[T]):
     """Any Number"""
@@ -403,6 +550,12 @@ class Null[T: Source](Chain[T]):
         return self._to_null(other)
 
     def __ror__(self, other: object, /):
+        return self._to_null(other)
+
+    def _sum(self, other: object, /):
+        return self._to_null(other)
+
+    def _avg(self, other: object, /):
         return self._to_null(other)
 
 
