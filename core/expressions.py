@@ -494,3 +494,19 @@ class AggUniq[T: Source, K: Source](Expression[T]):
     @override
     def __repr__(self) -> str:
         return f"uniq({self.metrica}, {self.path})"
+
+
+@dataclass(frozen=True, init=False)
+class Stack[T: Source, K: Source](Expression[T]):
+    parent: Expression[T]
+    child: Expression[K]
+
+    def __init__(self, parent: Expression[T], child: Expression[K]):
+        # Проверяем что все выражения из одного источника
+        super().__init__(source=parent.source)
+        object.__setattr__(self, "parent", parent)
+        object.__setattr__(self, "child", child)
+
+    @override
+    def __repr__(self) -> str:
+        return f"{self.parent} >> {self.child})"

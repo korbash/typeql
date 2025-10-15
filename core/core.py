@@ -24,6 +24,7 @@ from .expressions import (
     NotEqual,
     Or,
     Source,
+    Stack,
     Subtract,
     Sum,
     AggSum,
@@ -185,6 +186,11 @@ class DateTime[T: Source](Chain[T]):
         """Extract minute from datetime"""
         return DateMinute(R(self.exp, "minute"))
 
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return DateTime(exp)
+
 
 class DateHour[T: Source](DateTime[T]):
     """Hour part of DateTime"""
@@ -201,6 +207,11 @@ class DateHour[T: Source](DateTime[T]):
     @override
     def get_self_type(cls):
         return cls.DateHourSrc()
+
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return DateHour(exp)
 
 
 class DateDay[T: Source](DateTime[T]):
@@ -219,6 +230,11 @@ class DateDay[T: Source](DateTime[T]):
     def get_self_type(cls):
         return cls.DateDaySrc()
 
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return DateDay(exp)
+
 
 class DateWeek[T: Source](DateTime[T]):
     """Week part of DateTime"""
@@ -235,6 +251,11 @@ class DateWeek[T: Source](DateTime[T]):
     @override
     def get_self_type(cls):
         return cls.DateWeekSrc()
+
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return DateWeek(exp)
 
 
 class DateMonth[T: Source](DateTime[T]):
@@ -253,6 +274,11 @@ class DateMonth[T: Source](DateTime[T]):
     def get_self_type(cls):
         return cls.DateMonthSrc()
 
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return DateMonth(exp)
+
 
 class DateYear[T: Source](DateTime[T]):
     """Year part of DateTime"""
@@ -269,6 +295,11 @@ class DateYear[T: Source](DateTime[T]):
     @override
     def get_self_type(cls):
         return cls.DateYearSrc()
+
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return DateYear(exp)
 
 
 class DateSecond[T: Source](DateTime[T]):
@@ -287,6 +318,11 @@ class DateSecond[T: Source](DateTime[T]):
     def get_self_type(cls):
         return cls.DateSecondSrc()
 
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return DateSecond(exp)
+
 
 class DateMinute[T: Source](DateTime[T]):
     """Minute part of DateTime"""
@@ -303,6 +339,11 @@ class DateMinute[T: Source](DateTime[T]):
     @override
     def get_self_type(cls):
         return cls.DateMinuteSrc()
+
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return DateMinute(exp)
 
 
 class Number[T: Source](Chain[T]):
@@ -382,6 +423,11 @@ class Number[T: Source](Chain[T]):
         """Equal comparison operator"""
         return Bool(Equal(self.exp, self._to_exp(other)))
 
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return Number(exp)
+
 
 class Bool[T: Source](Chain[T]):
     """Bool"""
@@ -434,6 +480,11 @@ class Bool[T: Source](Chain[T]):
         """Not equal comparison operator"""
         return Bool(NotEqual(self.exp, self._to_exp(other)))
 
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return Bool(exp)
+
 
 class String[T: Source](Chain[T]):
     """Any String"""
@@ -471,6 +522,11 @@ class String[T: Source](Chain[T]):
     def ne(self, other: "String[T] | str"):
         """Not equal comparison operator"""
         return Bool(NotEqual(self.exp, self._to_exp(other)))
+
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return String(exp)
 
 
 class Null[T: Source](Chain[T]):
@@ -517,6 +573,9 @@ class Null[T: Source](Chain[T]):
     def __rtruediv__(self, other: object, /):
         return self._to_null(other)
 
+    def __call__(self, *args, **kwargs):
+        return Null((self.exp))
+
     # Comparison operations
     def eq(self, other: object):
         return self._to_null(other)
@@ -557,6 +616,11 @@ class Null[T: Source](Chain[T]):
 
     def _avg(self, other: object, /):
         return self._to_null(other)
+
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return Null(exp)
 
 
 def oneOf[*T](*args: *tuple[*T]):
@@ -631,7 +695,7 @@ def toChain[S: Source](
         return c
 
 
-def aggSum[S: Source](metrica, way):
+def aggSum(metrica, way):
     return metrica._sum(way)
 
 

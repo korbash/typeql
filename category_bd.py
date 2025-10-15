@@ -13,13 +13,50 @@ from core.core import (
     String,
     Null,
     Number,
+    Chain,
+    aggAvg,
     aggUniq,
     oneOf,
     case,
     toChain,
     aggSum,
 )
-from core.expressions import Expression as Exp, Relation as R, Source
+from core.expressions import Expression as Exp, Relation as R, Source, Stack
+
+
+@final
+class ExchangeRate[T: Source](String[T]):
+    """category of goods"""
+
+    class ExchangeRateSrc(String.StringSrc): ...
+
+    @property
+    @override
+    def id(self):
+        return String(R(self.exp, "toString"))
+
+    @classmethod
+    @override
+    def get_self_type(cls):
+        return cls.ExchangeRate()
+
+    @property
+    def time(self):
+        return DateTime(R(self.exp, "time"))
+
+    @property
+    def eurRate(self):
+        return Number(R(self.exp, "eurRate"))
+
+    @property
+    def rubRate(self):
+        return Number(R(self.exp, "rubRate"))
+
+    @override
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return ExchangeRate(exp)
 
 
 @final
@@ -37,6 +74,12 @@ class Currency[T: Source](String[T]):
     @override
     def get_self_type(cls):
         return cls.CurrencySrc()
+
+    @override
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return Currency(exp)
 
 
 @final
@@ -68,6 +111,12 @@ class Users[T: Source](String[T]):
     def email(self):
         exp = R(self.exp, "email")
         return oneOf(String(exp), Null(exp))
+
+    @override
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return Users(exp)
 
 
 @final
@@ -115,6 +164,12 @@ class Pets[T: Source](String[T]):
         """egg pet born erom"""
         return Eggs(R(self.exp, "bornFrom"))
 
+    @override
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return Pets(exp)
+
 
 @final
 class Eggs[T: Source](String[T]):
@@ -140,6 +195,12 @@ class Eggs[T: Source](String[T]):
     @property
     def name(self):
         return String(R(self.exp, "name"))
+
+    @override
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return Eggs(exp)
 
 
 @final
@@ -195,6 +256,12 @@ class Deals[T: Source](String[T]):
     def get_self_type(cls):
         return cls.DealsSrc()
 
+    @override
+    def __rrshift__[S: Source](self, other: "Chain[S]"):
+        """Right shift comparison operator"""
+        exp = Stack(other.get_expression(), self.get_expression())
+        return Deals(exp)
+
 
 class BD:
     @property
@@ -213,22 +280,38 @@ class BD:
     def eggs(self):
         return Eggs(Exp(Eggs.EggsSrc()))
 
+    @property
+    def exchangeRate(self):
+        return ExchangeRate(Exp(ExchangeRate.ExchangeRateSrc()))
+
 
 bd = BD()
-d = bd.deals
-seller_age = d.seller.age
-buyer_age = d.buyer.age
+rate = bd.exchangeRate
+eur_rate = aggAvg(rate.eurRate, rate.time.day())
+rub_rate = aggAvg(rate.rubRate, rate.time.day())
 
-d.seller
-cond = d.buyerCurrency.eq("rub")
-c1 = case({d.success & d.buyerCurrency.eq("rub"): d})
-success_deals = toChain(case({d.success & d.buyerCurrency.eq("rub"): d}, None))
-spend = success_deals.buyerPrice
-income = success_deals.buyerPrice - success_deals.sellerPrice
-buyers = success_deals.buyer
-sellers = success_deals.seller
-day = d.dealDate.day()
-s = income._sum(d.buyer)
-s2 = s - bd.users.age
-s3 = aggUniq(income, d.dealDate.day())
-print(s3)
+buerPriceUSD = toChain(
+    case(
+        {
+            bd.deals.buyerCurrency.eq("rub"): bd.deals.buyerPrice
+            * (bd.deals.dealDate >> rub_rate),
+            bd.deals.buyerCurrency.eq("eur"): bd.deals.buyerPrice
+            * (bd.deals.dealDate >> eur_rate),
+        },
+        bd.deals.buyerPrice,
+    )
+)
+sellerPriceUSD = toChain(
+    case(
+        {
+            bd.deals.sellerCurrency.eq("rub"): bd.deals.sellerPrice
+            * (bd.deals.dealDate >> rub_rate),
+            bd.deals.sellerCurrency.eq("eur"): bd.deals.sellerPrice
+            * (bd.deals.dealDate >> eur_rate),
+        },
+        bd.deals.sellerPrice,
+    )
+)
+income = toChain(case({bd.deals.success: buerPriceUSD - sellerPriceUSD}, 0))
+daily_income = income._sum(bd.deals.dealDate.day())
+income_from_user = (income._sum(bd.deals.buyer) + income._sum(bd.deals.seller)) / 2
