@@ -1,5 +1,5 @@
-from test_uv import toChain, caseSQL, aggAvg, aggSum, aggCount, aggUniq
-from test_uv.generated_bd_schema import BD
+from typeql import toChain, caseSQL, aggAvg, aggSum, aggCount, aggUniq
+from typeql.generated_bd_schema import BD
 
 bd = BD()
 rate = bd.exchangeRate
