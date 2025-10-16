@@ -5,8 +5,8 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-  "pandas-stubs>=2.3.0.250703",
   "pandas>=2.3.1",
+  "pandas-stubs>=2.3.0.250703",
   "sqlmodel>=0.0.24",
 ]
 
@@ -15,6 +15,10 @@ dev = [
   "basedpyright>=1.31.0",
   "ruff>=0.12.4",
 ]
+
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [tool.ruff]
 cache-dir = ".ruff_cache"
@@ -28,3 +32,7 @@ ignore = []
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["test_uv*"]

@@ -627,7 +627,7 @@ def oneOf[*T](*args: *tuple[*T]):
     return choice(args)
 
 
-def case[
+def caseSQL[
     S: Source,
     K: Sourceble | int | float | str | bool | datetime.datetime | None,
     K2: Sourceble | int | float | str | bool | datetime.datetime | None,

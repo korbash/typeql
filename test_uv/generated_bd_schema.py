@@ -1,6 +1,6 @@
 from typing import final, override
 
-from core.core import (
+from .core import (
     Bool,
     DateTime,
     DateHour,
@@ -14,14 +14,16 @@ from core.core import (
     Null,
     Number,
     Chain,
+)
+from .func import (
     aggAvg,
     aggUniq,
     oneOf,
-    case,
+    caseSQL,
     toChain,
     aggSum,
 )
-from core.expressions import Expression as Exp, Relation as R, Source, Stack
+from .expressions import Expression as Exp, Relation as R, Source, Stack
 
 
 @final
@@ -38,7 +40,7 @@ class ExchangeRate[T: Source](String[T]):
     @classmethod
     @override
     def get_self_type(cls):
-        return cls.ExchangeRate()
+        return cls.ExchangeRateSrc()
 
     @property
     def time(self):
@@ -175,7 +177,7 @@ class Pets[T: Source](String[T]):
 class Eggs[T: Source](String[T]):
     """goods of type egg"""
 
-    class EggsSrc(Source): ...
+    class EggsSrc(String.StringSrc): ...
 
     @property
     @override
@@ -283,35 +285,3 @@ class BD:
     @property
     def exchangeRate(self):
         return ExchangeRate(Exp(ExchangeRate.ExchangeRateSrc()))
-
-
-bd = BD()
-rate = bd.exchangeRate
-eur_rate = aggAvg(rate.eurRate, rate.time.day())
-rub_rate = aggAvg(rate.rubRate, rate.time.day())
-
-buerPriceUSD = toChain(
-    case(
-        {
-            bd.deals.buyerCurrency.eq("rub"): bd.deals.buyerPrice
-            * (bd.deals.dealDate >> rub_rate),
-            bd.deals.buyerCurrency.eq("eur"): bd.deals.buyerPrice
-            * (bd.deals.dealDate >> eur_rate),
-        },
-        bd.deals.buyerPrice,
-    )
-)
-sellerPriceUSD = toChain(
-    case(
-        {
-            bd.deals.sellerCurrency.eq("rub"): bd.deals.sellerPrice
-            * (bd.deals.dealDate >> rub_rate),
-            bd.deals.sellerCurrency.eq("eur"): bd.deals.sellerPrice
-            * (bd.deals.dealDate >> eur_rate),
-        },
-        bd.deals.sellerPrice,
-    )
-)
-income = toChain(case({bd.deals.success: buerPriceUSD - sellerPriceUSD}, 0))
-daily_income = income._sum(bd.deals.dealDate.day())
-income_from_user = (income._sum(bd.deals.buyer) + income._sum(bd.deals.seller)) / 2
