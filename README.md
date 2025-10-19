@@ -1,4 +1,4 @@
-### 🎯 Goal & Status
+## 🎯 Goal & Status
 
 This project is a **new language for analytical queries** that compiles into SQL.
 Its goal is to make analytical expressions **structure-oriented, type-safe, and supported by autocomplete**.
@@ -9,9 +9,9 @@ The next steps are SQL compilation and automatic generation of database structur
 
 ---
 
-### 💡 Key ideas
+## 💡 Key ideas
 
-#### 1. Database as a set of objects and one-way links
+### 1. Database as a set of objects and one-way links
 
 The database is represented as a **set of objects** (tables, entities, fields) and **one-way links** between them.
 A link exists if an instance of the first object can **uniquely determine** an instance of the second.
@@ -25,14 +25,14 @@ The concept is inspired by [David Spivak’s work](https://categoricaldata.net/c
 
 ---
 
-#### 2. Structure-oriented queries
+### 2. Structure-oriented queries
 
 A query is a **list of parameters that come from the same source (`Source`)**.
 Each parameter becomes a column in the final SQL result.
 
 ---
 
-##### Types of parameters
+### Types of parameters
 
 1. **Simple parameters** — moving down through dependencies from the current source.
    A chain can be **as long as needed**, passing through multiple levels:
@@ -59,10 +59,9 @@ Each parameter becomes a column in the final SQL result.
 3. **Metrics (aggregated parameters)** — the result of an aggregation function
    that **changes the source**.
    Each aggregation defines:
-
-   * a function (`aggSum`, `aggAvg`, `aggCount`, `aggUniq`);
-   * the parameter to aggregate (`param[source]`);
-   * the path to the dimension used for grouping (`path_to_groupby_dim`).
+   - a function (`aggSum`, `aggAvg`, `aggCount`, `aggUniq`);
+   - the parameter to aggregate (`param[source]`);
+   - the path to the dimension used for grouping (`path_to_groupby_dim`).
 
    Example:
 
@@ -75,18 +74,20 @@ Each parameter becomes a column in the final SQL result.
    meaning `user_spend` is now defined for every user
    and can be used as a parameter in queries with `UserSrc`.
 
+You could check **examples** folder with complete queries
+
 ---
 
-##### Type system and autocomplete rules
+### Type system and autocomplete rules
 
-* operations are allowed **only between parameters with the same `Source`**;
-* the compiler always knows **what fields and links exist for a given type**
+- operations are allowed **only between parameters with the same `Source`**;
+- the compiler always knows **what fields and links exist for a given type**
   and suggests them in autocomplete through `.`;
-* after aggregation, the result’s `Source` is automatically updated.
+- after aggregation, the result’s `Source` is automatically updated.
 
 ---
 
-#### 3. The `>>` operator
+### 3. The `>>` operator
 
 The `>>` operator connects **two independent objects**,
 similar to the `.` operator but without requiring a shared chain of origin.
@@ -94,7 +95,7 @@ It lets you reuse calculated metrics in new contexts.
 
 ---
 
-#### 4. Extensibility and expressiveness
+### 4. Extensibility and expressiveness
 
 The language supports functions and loops —
 everything you expect from a real programming language.
@@ -106,7 +107,7 @@ with less code, again relying on the database structure.
 
 ---
 
-### ⚙️ Installation
+## ⚙️ Installation
 
 Requires **Python ≥ 3.12**.
 To install dependencies (currently none), it’s recommended to use [uv](https://docs.astral.sh/uv/getting-started/installation/):
