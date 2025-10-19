@@ -4,11 +4,7 @@ version = "0.1.0"
 description = "Type-oriented analytical query language that compiles to SQL"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = [
-  "pandas>=2.3.1",
-  "pandas-stubs>=2.3.0.250703",
-  "sqlmodel>=0.0.24",
-]
+dependencies = []
 
 [dependency-groups]
 dev = [
