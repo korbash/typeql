@@ -1,6 +1,15 @@
-from typeql import toChain, caseSQL, aggAvg, aggSum, aggCount, aggUniq
-from typeql import Source, Number, DateTime
-from typeql.generated_bd_schema import Currency, BD
+from typeql import (
+    DateTime,
+    Number,
+    Source,
+    aggAvg,
+    aggCount,
+    aggSum,
+    aggUniq,
+    caseSQL,
+    toChain,
+)
+from typeql.generated_bd_schema import BD, Currency
 
 
 def amount_in_usd[T: Source](curr: Currency[T], price: Number[T], time: DateTime[T]):
