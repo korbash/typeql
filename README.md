@@ -1,3 +1,5 @@
+I wrote a detailed article in Russian on [Habr](https://habr.com/ru/articles/973966).
+
 ## 🎯 Goal & Status
 
 This project is a **new language for analytical queries** that compiles into SQL.
