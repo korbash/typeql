@@ -1,6 +1,6 @@
-[📖 Article: TypeQL — SQL for Analysts That Knows Everything About Data](https://korbash.github.io/typeql/)
+## Why you need TypeQL
 
-I wrote a detailed article
+Check my article [TypeQL: SQL for analysts that knows everything about your data](https://korbash.github.io/typeql/)
 
 ## 🎯 Goal & Status
 
