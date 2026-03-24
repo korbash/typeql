@@ -1,4 +1,6 @@
-I wrote a detailed article in Russian on [Habr](https://habr.com/ru/articles/973966).
+[📖 Article: TypeQL — SQL for Analysts That Knows Everything About Data](https://korbash.github.io/typeql/)
+
+I wrote a detailed article
 
 ## 🎯 Goal & Status
 
