@@ -8,6 +8,10 @@
             rel="stylesheet"
             href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.5.1/github-markdown.min.css"
         />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css"
+        />
         <style>
             body {
                 box-sizing: border-box;
@@ -32,12 +36,16 @@
         </article>
 
         <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
         <script>
             fetch("article.md")
                 .then((response) => response.text())
                 .then((text) => {
                     document.getElementById("content").innerHTML =
                         marked.parse(text);
+                    document.querySelectorAll("pre code").forEach((block) => {
+                        hljs.highlightElement(block);
+                    });
                 })
                 .catch((error) => {
                     document.getElementById("content").innerHTML =
