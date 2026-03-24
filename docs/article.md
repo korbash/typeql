@@ -1,39 +1,44 @@
-# TypeQL: SQL for Analysts That Knows Everything About Data
+> This is an English translation of my article on [Habr](https://habr.com/ru/articles/973966)
 
-For as long as I've been using SQL, it's been frustrating me (the only saving grace is that nowadays you can generate it with LLMs). Today I want to tell you about my prototype language for creating large and complex analytical queries that compiles to SQL.
+# TypeQL: SQL for analysts that knows everything about your data
 
-Before I start praising my creation, I need to thoroughly criticize SQL. So, what don't I like about it:
+I've been using SQL for as long as it has been annoying me (the only thing that saves me is that now you can generate it with LLMs). Today I want to talk about my prototype of a language for writing large and complex analytical queries that compiles to SQL.
 
-## Problems with SQL
+Before I start promoting my creation, I need to properly criticize SQL. So, what I don't like about it:
+
+## SQL Problems
 
 - **No functions and loops** (some databases implement them, but they're not in the standard). And this is clearly necessary if we want to write large queries and reuse code
-- **Overcomplicated syntax** — WHERE, HAVING, QUALIFY essentially perform filtering operations (this problem was solved by another interesting project, PRQL)
-- **Want a good LSP server** that relies more on the database structure, knows what can be joined with what, what types of relationships there are (1:m, m:1), and doesn't let you add strings to numbers at the code writing stage
 
-I could criticize SQL at length and in detail, as each of us could, but it's time to move forward.
+- **Overcomplicated syntax** — WHERE, HAVING, QUALIFY all essentially perform the same filtering operation (this problem was solved by another interesting project [PRQL](https://prql-lang.org/))
+
+- **I want a good LSP server**, so the language relies more on the database structure, knows what can be joined with what, what the relation types are (1:m, m:1), and doesn't let you add strings to numbers at the time of writing the code
+
+I could criticize SQL for a long time in great detail, as any of us could, but it's time to move on.
 
 ## A New Approach
 
 I want to propose a language that will be:
-- based on data structure
-- metric-oriented
 
-What is data structure? In the classical approach, it's a list of tables, each table has columns, each column has a type and some constraints:
+1. based on the data structure
+2. metric-oriented
 
-- **PRIMARY KEY** — unique value, semantically the field by which you're supposed to search for the needed row in the table
-- **FOREIGN KEY** — reference to a column in another table (usually a primary key). A row in the dependent table must be uniquely determined
-- **UNIQUE** — unique value
-- **NOT NULL** — it's not null
-- **CHECK** — arbitrary constraint, for example `status IN ('created', 'completed')` or `age > 0`
+So what is a data structure? In the classical approach, it's a list of tables, each table has columns, and each column has a type and some constraints:
 
-That's essentially it. If SQL used this information about the database — that would already be great. But since we're creating a new language, we can describe the data structure in a new way.
+- **PRIMARY KEY** — a unique value, semantically the field by which you're supposed to find the right row in the table
+- **FOREIGN KEY** — a reference to a column in another table (usually a primary key). A row in the dependent table must be uniquely determined
+- **UNIQUE** — a unique value
+- **NOT NULL** — it's not null anywhere
+- **CHECK** — an arbitrary constraint, for example `status IN ('created', 'completed')` or `age > 0`
 
-Let's abstract from which tables our data is physically stored in, and think about it from the perspective of the real world.
+That's basically it. If SQL used this information about the database — it would already be great. But since we're creating a new language, we can describe the data structure in a new way too.
 
-In the real (object-oriented) world, we have:
+Let's abstract away from which physical tables our data is stored in, and think about it from the perspective of the real world.
 
-- **Types** (table structure — what columns it has and what constraints they have)
-- **Objects** (table rows) — must have some type
+In the real (object-oriented) world we have:
+
+- **Types** (the structure of a table — what columns it has and what constraints they have)
+- **Objects** (table rows) — they always have some type
 - **Parameters** of objects (table columns)
 - Other objects can also be parameters
 - For each object, the values of its parameters are uniquely determined
@@ -50,12 +55,12 @@ CREATE TABLE users (
   FOREIGN KEY (invited_by) REFERENCES users(id)
 );
 
--- goods of 2 types: either pets or machines
+-- goods of 2 types: either a pet or a machine
 CREATE TABLE goods (
   id INT PRIMARY KEY,
   is_alive BOOLEAN NOT NULL,
-  sex VARCHAR(100), -- pets have gender
-  brand VARCHAR(100) -- machines have brand
+  sex VARCHAR(100), -- pets have a sex
+  brand VARCHAR(100) -- machines have a brand
 );
 
 CREATE TABLE deals (
@@ -73,7 +78,7 @@ CREATE TABLE deals (
 );
 ```
 
-Let's convert this to an object-oriented representation, writing it in pseudo-Python:
+Let's convert this to an object-oriented representation, written in pseudo-Python:
 
 ```python
 class User:
@@ -102,21 +107,26 @@ class Deal:
     def deal_date() -> DateTimeSQL: ...
 ```
 
-This representation is very close to the 4th normal form, even slightly broader — it allows describing discriminated unions like `def good() -> Pet | Machine: ...`. You can't describe such a dependency beautifully in a database.
+Such a structure can be schematically represented as a directed graph (the schema is slightly simplified in the diagram)
+![simplified example of a data schema in my representation](schema_graph.png)
 
-But the main idea is that I now look at data as a structure of dependent objects. As an analyst, I take a deal, and I want to know what I can uniquely determine from this deal. And my representation answers exactly this question.
+This representation is very close to the 4th normal form, and even a bit broader — it allows you to describe a discriminated union like `def good() -> Pet | Machine: ...` You can't describe such a dependency neatly in a database.
 
-The idea is not new — a similar representation was described by David Spivak, for example [here](https://arxiv.org/abs/1009.1166). And while preparing for this article, I stumbled upon a project that went even further by applying full type theory to describe database structure: [https://typedb.com](https://typedb.com) (a project with a very similar idea). How did I not find it before!
+But the main idea is that I now look at data as a structure of dependent objects. As an analyst, I take a deal, and I want to know what I can uniquely determine from that deal. And my representation answers exactly that question.
 
-Generally, by design, this schema doesn't need to be written by hand — it's automatically generated from the database. And some additional information that's not in the database structure can be passed through tags in comments on database columns. I'll write about this in more detail at the end.
+The idea is not new — a similar representation was described by David Spivak [for example here](https://categoricaldata.net/cql/Broad_SoftEng.pdf). And while preparing for this article, I came across a project that went even further, applying full type theory to describe the database structure: https://typedb.com (a project with a very similar idea and name 😄). How did I not find it earlier!
 
-So, we already have a data structure — the IDE knows it and can suggest!
+In general, the idea is that this schema doesn't need to be written by hand — it is automatically generated from the database. And some additional information that is not in the database structure can be passed through tags in column comments in the database. I'll write more about this at the end.
 
-Already wonderful! It even displays comments for each parameter!
+So, we already have a data structure — the IDE knows it and can give hints:
+
+![autocomplete in TypeQL](typeql_autocomplete.png)
+
+Already great! It even shows comments for each parameter!
 
 ## Metric-Oriented Approach
 
-But it's time to move forward to creating a full-fledged Query Language. Here we remember that we're making a metric-oriented language, so the result of any query is a metric (dimension → parameter binding), where dimension is one of our types (or Cartesian product of several), and parameter, as before, is what is uniquely determined by the dimension.
+But it's time to move on to creating a full Query Language. Here we remember that we are making a metric-oriented language, so the result of any query is a metric (a pair of dimension → parameter), where dimension is one of our types (or a Cartesian product of several), and parameter — as before — is something that is uniquely determined by the dimension.
 
 For example, for each deal we can calculate the price in dollars:
 
@@ -126,14 +136,14 @@ price_usd = caseSQL({
     d.currency == 'RUB': d.price * 0.0127,
     d.currency == 'EUR': d.price * 1.1,
     d.currency == 'USD': d.price,
-})  # depending on the currency, multiply by the needed exchange rate
+})  # multiply by the right exchange rate depending on the currency
 
 d.price_usd = price_usd  # now the IDE will suggest it
 ```
 
-(I should note that this is the syntax I would like to see; in reality, I couldn't achieve it — had to make it more cumbersome)
+(I should note that this is the syntax I would like to see; in reality it couldn't be achieved — it had to be done in a messier way)
 
-That is, the result of any query is a new parameter that seamlessly integrates into the structure, and can be reused in other queries! Moreover, we can use all the power of a normal programming language — functions and loops.
+So the result of any query is a new parameter that naturally fits into the structure, and it can be reused in other queries! Moreover, we can use all the power of a normal programming language — functions and loops.
 
 For example, we can define our metric as a function:
 
@@ -145,43 +155,44 @@ def price_usd(rub_rate: float, eur_rate: float):
         d.currency == 'USD': d.price,
     })
 
-d.price_usd = price_usd  # so the IDE suggests it
+d.price_usd = price_usd  # so the IDE gives hints
 ```
 
-By the way, the idea that a metric-oriented language for analytical queries is good is also not new, described for example [here](https://arxiv.org/abs/1203.2547).
+By the way, the idea that a metric-oriented language for analytical queries is a good thing is also not new, described [for example here](https://docs.getdbt.com/docs/build/about-metricflow).
 
 ## Metric Formalism
 
-Hurray, we've learned to calculate simple metrics! In the Python implementation, I defined a metric as a generic type: `result[source]`, where `result` is the parameter type, and `source` is the type indicating the dimension. The metric from our example has type `NumberSQL[DealsSrc]`.
+Great, we've learned how to calculate simple metrics! In the Python implementation I defined a metric as a generic type: `result[source]`, where `result` is the parameter type and `source` is the type indicating the dimension. The metric from our example has type `NumberSQL[DealsSrc]`.
 
-Let's describe what we can already do with metrics in the new formalism. We can perform any scalar function (allowed in SQL) if:
+Let's describe what we can already do with metrics in the new formalism. We can apply any scalar function (allowed in SQL) if:
 
-- The arguments have the same source. The result will have the same source: `f(a[s], b[s], c[s]) -> metrica[s]`. But `f(a[s1], b[s2])` will throw an error
-- Their types are allowed for this function (`NumberSQL + NumberSQL` — ok, `NumberSQL + StringSQL` — not ok)
+1. The arguments have the same source. The result will have the same source: `f(a[s], b[s], c[s]) -> metrica[s]`. But `f(a[s1], b[s2])` will give an error
+2. Their types are allowed for the given function (`NumberSQL + NumberSQL` — allowed, `NumberSQL + StringSQL` — not allowed)
 
-Hurray, we can calculate any scalar metrics! Now we need to deal with aggregation.
+Great, we can calculate any scalar metrics! Now we need to deal with aggregation.
 
 ## Aggregation
 
-Here everything is simple. For aggregation I need:
+This is simple. For aggregation I need:
 
-- An aggregation function (there are only 5: `aggSum`, `aggAvg`, `aggMin`, `aggMax`, `aggCount`, `aggUniq`)
-- A metric (which we will aggregate) `metrica[source]`
-- A path to the new dimension `newSource[source]` (actually also a metric). This can be a tuple of several paths `(newS1[source], newS2[source])`
+1. An aggregation function (there are just 5: `aggSum`, `aggAvg`, `aggMin`, `aggMax`, `aggCount`, `aggUniq`)
+2. A metric (which we will aggregate) `metrica[source]`
+3. A path to a new dimension `newSource[source]` (which is also a metric). This can be a tuple of several paths `(newS1[source], newS2[source])`
 
-As a result, we get a metric with a new source (dimension) `metrica[newSource]`. Or, if there were several paths, the new source will be their Cartesian product `metrica[cartesian[newS1, newS2]]`.
+The result is a metric with a new source (dimension) `metrica[newSource]`. Or, if there were several paths, the new source will be their Cartesian product `metrica[cartesian[newS1, newS2]]`.
 
-In general, the behavior is completely analogous to such a query:
+In SQL this would look like:
 
 ```sql
 SELECT
     path,
     SUM(metrica) -- or another aggregation function
 FROM some_table
+-- maybe some joins here
 GROUP BY path
 ```
 
-Example of a metric with explicit type indication for clarity (in reality, everything is computed):
+Example metric with explicit types for clarity (in reality everything is computed):
 
 ```python
 result: NumberSQL[UserSrc] = aggSum(
@@ -190,23 +201,25 @@ result: NumberSQL[UserSrc] = aggSum(
 )
 ```
 
-The only difference is that the result remains a metric and can be further reused.
+The only difference is that the result remains a metric and can be reused further.
 
 ## That's Basically It
 
-By this point, we've learned to do only 4 things:
+By this point we've learned to do just 4 things:
 
 **For parameters:**
-- Calculate scalar functions from parameters
-- Calculate aggregation functions
+
+1. Calculate scalar functions from parameters
+2. Calculate aggregation functions
 
 **For dimensions (sources):**
-- Create new dimensions through Cartesian product of existing ones
-- Create new dimensions through sum of existing ones (what's denoted by `|` in Python, and in SQL it's `UNION ALL`)
 
-Strangely enough, this is already enough for us to express any SELECT query (missing ORDER BY, but that's a minor detail). Of course, we'd also like window functions — although they can be expressed through subqueries, it's very inconvenient. So we should figure out how to add them to my syntax.
+1. Create new dimensions via Cartesian product of existing ones
+2. Create new dimensions via union of existing ones (what is denoted with `|` in Python, and in SQL this is `UNION ALL`)
 
-About filtering: you can filter rows now through `caseSQL`, for example like this:
+Surprisingly, this is already enough to express any SELECT query (ORDER BY is missing, but that's a minor thing). Of course, window functions would be nice — even though they can be expressed through subqueries, it is very inconvenient. So I need to figure out how to add them to my syntax.
+
+About filtering: you can currently filter rows via `caseSQL`, for example like this:
 
 ```python
 success_deals = caseSQL({
@@ -214,46 +227,42 @@ success_deals = caseSQL({
 }, default=Null)
 ```
 
-But since the operation is frequent, probably we should allocate a separate function for it.
+But since it's a frequent operation, it probably makes sense to create a separate function for it.
 
-That's essentially my entire idea of a metric-oriented and well-typed language to replace SQL. Interested to know what people think — write, I'll read everything.
+That's basically the whole idea of my metric-oriented and well-typed language as a replacement for SQL. I'm curious what everyone thinks — write in the comments, I'll read everything.
 
-Here [https://github.com/korbash/typeql](https://github.com/korbash/typeql) I implemented a prototype compiler to SQL. It can't compile yet and the data schema is also hardcoded, but you can look at query examples and test how the IDE helps write queries: knows who has which parameters, doesn't let you add metrics with different sources, doesn't let you add strings and numbers.
+Here https://github.com/korbash/typeql I implemented a prototype compiler to SQL. It can't actually compile yet and the data schema is hardcoded, but you can look at [query examples](https://github.com/korbash/typeql/tree/simple-struct/examples) and test how the IDE helps write a query: it knows what parameters each type has, won't let you add metrics with different sources, won't let you add a string and a number.
 
-## Technical Difficulties
+## Technical Challenges
 
-I must say that when writing the compiler, I ran into difficulties — I hit the limits of typing in Python, already having to use various workarounds. Even found a bug in Pyright.
+I have to say, I ran into some difficulties here — I hit the limits of Python's type system, and I'm already forced to use various workarounds. I even found a [bug](https://github.com/microsoft/pyright/issues/11035#event-20309595358) in Pyright.
 
-I spent a long time looking for a language that could handle my type checking needs. One of the main features is that it should work well with sum types. If a user gets a metric with type `Pet | Machine`, the language should understand which parameters Pet has, which Machine has, and suggest them all in autocomplete.
+I spent a long time looking for a language that could handle my type-checking needs. One of the main requirements is that it must work well with sum types. If a user gets a metric with type `Pet | Machine`, the language must understand what parameters Pet has, what Machine has, and suggest all of them in autocomplete.
 
-And this feature, strangely enough, is rare among languages. It exists in Python and TypeScript, but languages known for good work with types don't fit well for this parameter: Lean, OCaml, Haskell — all miss the mark. Scala possibly, but I'm not sure.
+And this feature, surprisingly, is present in very few languages. Python and TypeScript have it, but languages known for strong type systems don't fit here: Lean, OCaml, Haskell — all miss the mark. Scala possibly, but I'm not sure.
 
-TypeScript fits best, but you can't overload operators there, and that's a big minus in my case.
+TypeScript fits best, but it doesn't support operator overloading, which is a big downside in my case.
 
-In general, the question of which language to write such a library in remains open. If anyone has ideas — I'd be happy to hear them.
+In general, the question of which language to use for writing such a library remains open. If anyone has ideas — I'd be happy to hear them.
 
-## Schema Generation from Database
+## Generating Schema from a Database
 
-Regarding schema generation from the database, things are not so bad here. All databases support comments on columns, and in these comments through special tags like `@id`, `@ignore`, `@virt(currency.id)`, `@link(pets, machines)` you can pass additional information about the schema — what couldn't be conveyed by standard means through PRIMARY / FOREIGN KEY.
+The situation with generating schema from a database is not so bad. All databases support column comments, and through special tags like `@id`, `@ignore`, `@virt(currency.id)`, `@link(pets, machines)` in these comments you can pass additional schema information — things that couldn't be expressed the standard way through PRIMARY/FOREIGN KEY.
 
-They're easy to parse, besides them there can be regular human comments. Tags are compact — they don't interfere with reading the comment.
+They are easy to parse, and besides them the comment can also contain regular human-readable text. The tags are compact — they don't get in the way of reading the comment.
 
-## Applications
+## Use Cases
 
-Actually, it all started with the fact that I was very frustrated that in BI systems it's difficult to embed filters. You can't just write a query and have filters pull themselves in — for each one you need to specify what valid values it has or what query to use to get them. This is if we're talking about tools like Superset, Metabase. If we're talking about DataLens, Tableau, there's a different problem — they essentially combine everything into one big table (through a view, but still) and then work with it. And here the data structure is lost.
+Actually, it all started because I was really frustrated that in BI systems it's hard to embed filters. You can't just write a query and have the filters automatically follow it — for each filter you need to specify what its allowed values are or what query to use to get them. This is about tools like Superset, Metabase. For DataLens, Tableau, there's a different problem — they effectively merge everything into one big table (via a view, but still) and then work with it. Here the problem is different — the data structure is lost.
 
-One of the main advantages of my language is that it always knows the type for each metric. For example, I want to add a filter on buyers. In the code, it's enough to write something like:
+My language, on the other hand, has one of its main advantages — it always knows the type of each metric. For example, if I want to add a filter on buyers. In the code it's enough to write something like:
 
 ```python
 buyerFilter: User[DealsSrc] = filter(deals.buyer)
 ```
 
-(I indicated the type for better understanding)
+(The type is shown explicitly here for clarity)
 
-In the dashboard, you don't need to specify anything additionally — it already knows everything. From the filter it knows we're filtering by users, what parameters a user has is known from the data structure, you can configure filtering by all of them right in the UI — whether by registration date, country, or age. And default parameters can be passed right in the query code.
+In the dashboard nothing additional needs to be configured — it already knows everything. From the filter it knows what parameters the user has, and you can set up filtering on all of them right in the UI — by registration date, country, age, whatever. And default parameters can be passed directly in the query code.
 
-Therefore, the language is primarily for embedding in BI and data exploration systems. In the future, possibly in ELT pipelines like SQLMesh or dbt. For non-analytical queries, my language will probably be useless.
-
----
-
-**Original article in Russian:** [TypeQL: SQL для аналитиков, который знает о данных всё](https://habr.com/ru/articles/973966/)
+That's why the language is primarily for embedding in BI and data exploration systems. In the future possibly in ELT pipelines like SQLMesh or dbt. For non-analytical queries my language will probably be useless.
