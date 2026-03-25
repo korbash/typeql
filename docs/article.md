@@ -2,7 +2,7 @@
 
 # TypeQL: SQL for analysts that knows everything about your data
 
-I've been using SQL for as long as it has been annoying me (the only thing that saves me is that now you can generate it with LLMs). Today I want to talk about my prototype of a language for writing large and complex analytical queries that compiles to SQL.
+SQL has been frustrating me since day one. The only thing that saves me now that you could generate it with LLMs. Today I want to talk about my prototype of a language for writing large and complex analytical queries that compiles to SQL.
 
 Before I start promoting my creation, I need to properly criticize SQL. So, what I don't like about it:
 
